@@ -1,0 +1,21 @@
+{
+  "expo": {
+    "name": "LinuxSwipe",
+    "slug": "linuxswipe",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "scheme": "linuxswipe",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.linuxswipe.app"
+    },
+    "android": {
+      "package": "com.linuxswipe.app"
+    },
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}
