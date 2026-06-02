@@ -36,13 +36,14 @@ export default function App() {
         <StatusBar style="light" />
         <Tab.Navigator
           screenOptions={{
+            headerShown: false,
             headerStyle: {
               backgroundColor: palette.panel
             },
             headerTintColor: palette.textPrimary,
             headerShadowVisible: false,
             tabBarStyle: {
-              backgroundColor: palette.panel,
+              backgroundColor: palette.footerPanel,
               borderTopColor: palette.border,
               height: 72,
               paddingBottom: 10,
@@ -67,7 +68,7 @@ export default function App() {
           <Tab.Screen
             component={StatsScreen}
             name="Stats"
-            options={{ title: "Статистика" }}
+            options={{ headerShown: true, title: "Статистика" }}
           />
         </Tab.Navigator>
       </NavigationContainer>

@@ -10,30 +10,27 @@ import { CardOutcome, LearningState, LearningStats } from "../types/progress";
 
 type LearningContextValue = {
   cards: Card[];
-  currentCard: Card | null;
-  currentIndex: number;
   isHydrated: boolean;
+  progress: Record<string, CardOutcome>;
   stats: LearningStats;
-  markKnown: () => Promise<void>;
-  markForReview: () => Promise<void>;
+  markCardKnown: (cardId: string) => Promise<void>;
+  markCardForReview: (cardId: string) => Promise<void>;
   restart: () => Promise<void>;
 };
 
 const LearningContext = createContext<LearningContextValue | undefined>(undefined);
 
 const buildInitialState = (): LearningState => ({
-  currentIndex: 0,
   progress: {}
 });
 
-const sanitizeState = (state: LearningState): LearningState => {
+const sanitizeState = (state: Partial<LearningState> | null): LearningState => {
   const validIds = new Set(cards.map((card) => card.id));
   const progress = Object.fromEntries(
-    Object.entries(state.progress).filter(([cardId]) => validIds.has(cardId))
+    Object.entries(state?.progress ?? {}).filter(([cardId]) => validIds.has(cardId))
   ) as Record<string, CardOutcome>;
 
   return {
-    currentIndex: Math.min(Math.max(state.currentIndex, 0), cards.length),
     progress
   };
 };
@@ -65,7 +62,7 @@ export function LearningProvider({ children }: PropsWithChildren) {
     const hydrate = async () => {
       const storedState = await loadLearningState();
 
-      if (isMounted && storedState) {
+      if (isMounted) {
         setState(sanitizeState(storedState));
       }
 
@@ -86,18 +83,11 @@ export function LearningProvider({ children }: PropsWithChildren) {
     await saveLearningState(nextState);
   };
 
-  const markOutcome = async (outcome: CardOutcome) => {
-    const card = cards[state.currentIndex];
-
-    if (!card) {
-      return;
-    }
-
+  const markOutcome = async (cardId: string, outcome: CardOutcome) => {
     const nextState: LearningState = {
-      currentIndex: Math.min(state.currentIndex + 1, cards.length),
       progress: {
         ...state.progress,
-        [card.id]: outcome
+        [cardId]: outcome
       }
     };
 
@@ -110,12 +100,11 @@ export function LearningProvider({ children }: PropsWithChildren) {
 
   const value: LearningContextValue = {
     cards,
-    currentCard: cards[state.currentIndex] ?? null,
-    currentIndex: state.currentIndex,
     isHydrated,
+    progress: state.progress,
     stats: buildStats(state),
-    markKnown: async () => markOutcome("known"),
-    markForReview: async () => markOutcome("review"),
+    markCardKnown: async (cardId) => markOutcome(cardId, "known"),
+    markCardForReview: async (cardId) => markOutcome(cardId, "review"),
     restart
   };
 

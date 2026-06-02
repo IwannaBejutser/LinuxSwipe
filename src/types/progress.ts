@@ -1,7 +1,6 @@
 export type CardOutcome = "known" | "review";
 
 export type LearningState = {
-  currentIndex: number;
   progress: Record<string, CardOutcome>;
 };
 
