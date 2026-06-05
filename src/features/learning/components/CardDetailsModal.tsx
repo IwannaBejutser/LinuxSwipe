@@ -1,8 +1,17 @@
-import { Modal, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  Modal,
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 
-import { palette } from "../../../shared/theme/palette";
-import { getDifficultyLabel } from "../lib/difficulty";
-import { Card } from "../types/card";
+import { palette } from '../../../shared/theme/palette';
+import { getCategoryLabel } from '../lib/category';
+import { getDifficultyLabel } from '../lib/difficulty';
+import { Card } from '../types/card';
 
 type CardDetailsModalProps = {
   card: Card;
@@ -35,17 +44,21 @@ export function CardDetailsModal({ card, onClose, visible }: CardDetailsModalPro
         >
           <View style={styles.card}>
             <View style={styles.card__metaRail}>
-              <DetailMetaPill label={card.category} />
+              <DetailMetaPill label={getCategoryLabel(card.category)} />
               <DetailMetaPill label={getDifficultyLabel(card.difficulty)} />
             </View>
 
             <DetailPanel body={card.answer} title="Правильный ответ" tone="accent" />
             <DetailPanel body={card.example} title="Когда пригодится" tone="default" />
-            <DetailPanel body={card.hint} title="Подсказка для запоминания" tone="subtle" />
+            <DetailPanel
+              body={card.hint}
+              title="Подсказка для запоминания"
+              tone="subtle"
+            />
 
             {card.acceptedAnswers?.length ? (
               <DetailPanel
-                body={card.acceptedAnswers.join("\n")}
+                body={card.acceptedAnswers.join('\n')}
                 title="Допустимые варианты"
                 tone="default"
               />
@@ -70,22 +83,24 @@ function DetailMetaPill({ label }: { label: string }) {
 function DetailPanel({
   body,
   title,
-  tone
+  tone,
 }: {
   body: string;
   title: string;
-  tone: "accent" | "default" | "subtle";
+  tone: 'accent' | 'default' | 'subtle';
 }) {
   return (
     <View
       style={[
         styles.panel,
-        tone === "accent" && styles.panelAccent,
-        tone === "subtle" && styles.panelSubtle
+        tone === 'accent' && styles.panelAccent,
+        tone === 'subtle' && styles.panelSubtle,
       ]}
     >
       <Text style={styles.panel__title}>{title}</Text>
-      <Text style={tone === "accent" ? styles.panel__answer : styles.panel__body}>{body}</Text>
+      <Text style={tone === 'accent' ? styles.panel__answer : styles.panel__body}>
+        {body}
+      </Text>
     </View>
   );
 }
@@ -93,36 +108,36 @@ function DetailPanel({
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: palette.background
+    backgroundColor: palette.background,
   },
   screen__header: {
     paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: 14,
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
     gap: 12,
     borderBottomWidth: 1,
     borderBottomColor: palette.border,
-    backgroundColor: "rgba(8, 10, 13, 0.94)"
+    backgroundColor: 'rgba(8, 10, 13, 0.94)',
   },
   screen__headerCopy: {
     flex: 1,
-    gap: 6
+    gap: 6,
   },
   screen__eyebrow: {
     color: palette.accentStrong,
     fontSize: 11,
-    fontWeight: "800",
+    fontWeight: '800',
     letterSpacing: 1.2,
-    textTransform: "uppercase"
+    textTransform: 'uppercase',
   },
   screen__title: {
     color: palette.textPrimary,
     fontSize: 20,
-    fontWeight: "900",
-    lineHeight: 27
+    fontWeight: '900',
+    lineHeight: 27,
   },
   screen__closeButton: {
     paddingHorizontal: 15,
@@ -130,32 +145,32 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     borderWidth: 1,
     borderColor: palette.border,
-    backgroundColor: palette.panelElevated
+    backgroundColor: palette.panelElevated,
   },
   screen__closeButtonText: {
     color: palette.textPrimary,
     fontSize: 13,
-    fontWeight: "800"
+    fontWeight: '800',
   },
   screen__content: {
     paddingHorizontal: 16,
     paddingTop: 18,
     paddingBottom: 36,
-    alignItems: "center"
+    alignItems: 'center',
   },
   card: {
-    width: "100%",
+    width: '100%',
     maxWidth: 760,
     padding: 20,
     borderRadius: 30,
     borderWidth: 1,
     borderColor: palette.border,
     backgroundColor: palette.panel,
-    gap: 14
+    gap: 14,
   },
   card__metaRail: {
-    flexDirection: "row",
-    gap: 10
+    flexDirection: 'row',
+    gap: 10,
   },
   metaPill: {
     flex: 1,
@@ -166,43 +181,43 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: palette.border,
     backgroundColor: palette.overlayPill,
-    alignItems: "center"
+    alignItems: 'center',
   },
   metaPill__text: {
     color: palette.textSecondary,
     fontSize: 11,
-    fontWeight: "700"
+    fontWeight: '700',
   },
   panel: {
     padding: 18,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: "rgba(120, 130, 146, 0.12)",
+    borderColor: 'rgba(120, 130, 146, 0.12)',
     backgroundColor: palette.footerPanel,
-    gap: 10
+    gap: 10,
   },
   panelAccent: {
-    backgroundColor: palette.answerPanel
+    backgroundColor: palette.answerPanel,
   },
   panelSubtle: {
-    backgroundColor: palette.subtlePanel
+    backgroundColor: palette.subtlePanel,
   },
   panel__title: {
     color: palette.textMuted,
     fontSize: 11,
-    fontWeight: "800",
+    fontWeight: '800',
     letterSpacing: 1.2,
-    textTransform: "uppercase"
+    textTransform: 'uppercase',
   },
   panel__answer: {
     color: palette.textPrimary,
     fontSize: 24,
-    fontWeight: "900",
-    lineHeight: 31
+    fontWeight: '900',
+    lineHeight: 31,
   },
   panel__body: {
     color: palette.textSecondary,
     fontSize: 15,
-    lineHeight: 23
-  }
+    lineHeight: 23,
+  },
 });

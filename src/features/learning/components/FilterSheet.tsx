@@ -1,9 +1,15 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { FilterIcon } from "../../../shared/components/icons/AppIcons";
-import { palette } from "../../../shared/theme/palette";
-import { deckModeOptions, DeckMode, difficultyOptions, DifficultyFilter } from "../lib/deckBuilder";
-import { BottomSheetPanel } from "./BottomSheetPanel";
+import { FilterIcon } from '../../../shared/components/icons/AppIcons';
+import { palette } from '../../../shared/theme/palette';
+import { getCategoryLabel } from '../lib/category';
+import {
+  deckModeOptions,
+  DeckMode,
+  difficultyOptions,
+  DifficultyFilter,
+} from '../lib/deckBuilder';
+import { BottomSheetPanel } from './BottomSheetPanel';
 
 type FilterSheetProps = {
   categories: string[];
@@ -28,7 +34,7 @@ export function FilterSheet({
   onSelectDifficulty,
   selectedCategory,
   selectedDifficulty,
-  visible
+  visible,
 }: FilterSheetProps) {
   return (
     <BottomSheetPanel onClose={onClose} visible={visible}>
@@ -58,7 +64,8 @@ export function FilterSheet({
         <Text style={styles.sheet__sectionTitle}>Тема</Text>
         <FilterRail
           onSelect={onSelectCategory}
-          options={categories}
+          optionKeys={categories}
+          options={categories.map(getCategoryLabel)}
           selectedValue={selectedCategory}
         />
       </View>
@@ -89,7 +96,7 @@ function FilterRail({
   onSelect,
   optionKeys,
   options,
-  selectedValue
+  selectedValue,
 }: {
   onSelect: (value: string) => void;
   optionKeys?: string[];
@@ -115,7 +122,7 @@ function FilterRail({
             <Text
               style={[
                 styles.filterRail__chipText,
-                isActive && styles.filterRail__chipTextActive
+                isActive && styles.filterRail__chipTextActive,
               ]}
             >
               {label}
@@ -129,43 +136,43 @@ function FilterRail({
 
 const styles = StyleSheet.create({
   sheet__head: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 12
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
   },
   sheet__titleIcon: {
     width: 38,
     height: 38,
     borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(130, 245, 208, 0.08)"
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(130, 245, 208, 0.08)',
   },
   sheet__titleCopy: {
     flex: 1,
-    gap: 6
+    gap: 6,
   },
   sheet__title: {
     color: palette.textPrimary,
     fontSize: 24,
-    fontWeight: "900"
+    fontWeight: '900',
   },
   sheet__subtitle: {
     color: palette.textSecondary,
     fontSize: 14,
-    lineHeight: 21
+    lineHeight: 21,
   },
   sheet__section: {
-    gap: 8
+    gap: 8,
   },
   sheet__sectionTitle: {
     color: palette.textPrimary,
     fontSize: 12,
-    fontWeight: "800"
+    fontWeight: '800',
   },
   filterRail: {
     gap: 8,
-    paddingRight: 10
+    paddingRight: 10,
   },
   filterRail__chip: {
     borderRadius: 999,
@@ -173,50 +180,50 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderWidth: 1,
     borderColor: palette.border,
-    backgroundColor: palette.overlayPill
+    backgroundColor: palette.overlayPill,
   },
   filterRail__chipActive: {
     borderColor: palette.accentStrong,
-    backgroundColor: palette.accentStrong
+    backgroundColor: palette.accentStrong,
   },
   filterRail__chipText: {
     color: palette.textSecondary,
     fontSize: 11,
-    fontWeight: "700"
+    fontWeight: '700',
   },
   filterRail__chipTextActive: {
-    color: palette.background
+    color: palette.background,
   },
   sheet__actions: {
-    flexDirection: "row",
-    gap: 12
+    flexDirection: 'row',
+    gap: 12,
   },
   sheet__ghostButton: {
     flex: 1,
     borderRadius: 18,
     paddingVertical: 15,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1,
     borderColor: palette.border,
-    backgroundColor: palette.overlayPill
+    backgroundColor: palette.overlayPill,
   },
   sheet__ghostButtonText: {
     color: palette.textPrimary,
     fontSize: 15,
-    fontWeight: "800"
+    fontWeight: '800',
   },
   sheet__primaryButton: {
     flex: 1.2,
     borderRadius: 18,
     paddingVertical: 15,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: palette.accentStrong
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: palette.accentStrong,
   },
   sheet__primaryButtonText: {
     color: palette.background,
     fontSize: 15,
-    fontWeight: "900"
-  }
+    fontWeight: '900',
+  },
 });

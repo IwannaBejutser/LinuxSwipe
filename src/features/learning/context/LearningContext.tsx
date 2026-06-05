@@ -1,13 +1,20 @@
-import { createContext, PropsWithChildren, useContext, useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  PropsWithChildren,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 
-import { cards } from "../data/learningCards";
-import { buildInitialState, sanitizeState } from "../lib/learningState";
-import { buildStats } from "../lib/learningStats";
-import { MarkSource } from "../lib/xp";
-import { loadLearningState, saveLearningState } from "../storage/learningStorage";
-import { Card } from "../types/card";
-import { CardOutcome, LearningState, LearningStats, ReviewMeta } from "../types/progress";
-import { buildNextState } from "./learningReducer";
+import { cards } from '../data/learningCards';
+import { buildInitialState, sanitizeState } from '../lib/learningState';
+import { buildStats } from '../lib/learningStats';
+import { MarkSource } from '../lib/xp';
+import { loadLearningState, saveLearningState } from '../storage/learningStorage';
+import { Card } from '../types/card';
+import { CardOutcome, LearningState, LearningStats, ReviewMeta } from '../types/progress';
+import { buildNextState } from './learningReducer';
 
 type LearningContextValue = {
   cards: Card[];
@@ -66,7 +73,7 @@ export function LearningProvider({ children }: PropsWithChildren) {
   const markOutcome = async (
     cardId: string,
     outcome: CardOutcome,
-    source: MarkSource = "swipe"
+    source: MarkSource = 'swipe',
   ) => {
     const nextState = buildNextState(stateRef.current, cardId, outcome, source);
     await persistState(nextState);
@@ -82,9 +89,11 @@ export function LearningProvider({ children }: PropsWithChildren) {
     progress: state.progress,
     reviewMeta: state.reviewMeta,
     stats: buildStats(state),
-    markCardKnown: async (cardId, source = "swipe") => markOutcome(cardId, "known", source),
-    markCardForReview: async (cardId, source = "swipe") => markOutcome(cardId, "review", source),
-    restart
+    markCardKnown: async (cardId, source = 'swipe') =>
+      markOutcome(cardId, 'known', source),
+    markCardForReview: async (cardId, source = 'swipe') =>
+      markOutcome(cardId, 'review', source),
+    restart,
   };
 
   return <LearningContext.Provider value={value}>{children}</LearningContext.Provider>;
@@ -94,7 +103,7 @@ export function useLearning() {
   const context = useContext(LearningContext);
 
   if (!context) {
-    throw new Error("useLearning must be used inside LearningProvider");
+    throw new Error('useLearning must be used inside LearningProvider');
   }
 
   return context;

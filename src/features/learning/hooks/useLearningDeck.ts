@@ -1,14 +1,14 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState } from 'react';
 
 import {
   ALL_CATEGORIES_LABEL,
   buildLearningDeck,
   DeckMode,
   DifficultyFilter,
-  difficultyOptions
-} from "../lib/deckBuilder";
-import { Card } from "../types/card";
-import { CardOutcome, ReviewMeta } from "../types/progress";
+  difficultyOptions,
+} from '../lib/deckBuilder';
+import { Card } from '../types/card';
+import { CardOutcome, ReviewMeta } from '../types/progress';
 
 type UseLearningDeckParams = {
   cards: Card[];
@@ -18,12 +18,12 @@ type UseLearningDeckParams = {
 
 export function useLearningDeck({ cards, progress, reviewMeta }: UseLearningDeckParams) {
   const [selectedCategory, setSelectedCategory] = useState(ALL_CATEGORIES_LABEL);
-  const [selectedDifficulty, setSelectedDifficulty] = useState<DifficultyFilter>("all");
-  const [deckMode, setDeckMode] = useState<DeckMode>("all");
+  const [selectedDifficulty, setSelectedDifficulty] = useState<DifficultyFilter>('all');
+  const [deckMode, setDeckMode] = useState<DeckMode>('all');
 
   const categories = useMemo(
     () => [ALL_CATEGORIES_LABEL, ...new Set(cards.map((card) => card.category))],
-    [cards]
+    [cards],
   );
 
   const { filteredCards, remainingCards } = useMemo(
@@ -34,27 +34,27 @@ export function useLearningDeck({ cards, progress, reviewMeta }: UseLearningDeck
         progress,
         reviewMeta,
         selectedCategory,
-        selectedDifficulty
+        selectedDifficulty,
       }),
-    [cards, deckMode, progress, reviewMeta, selectedCategory, selectedDifficulty]
+    [cards, deckMode, progress, reviewMeta, selectedCategory, selectedDifficulty],
   );
 
   const completedInFeed =
-    deckMode === "review"
+    deckMode === 'review'
       ? filteredCards.length - remainingCards.length
-      : filteredCards.filter((card) => progress[card.id] === "known").length;
+      : filteredCards.filter((card) => progress[card.id] === 'known').length;
   const progressRatio =
     filteredCards.length === 0 ? 0 : completedInFeed / Math.max(filteredCards.length, 1);
   const activeFiltersCount =
     (selectedCategory === ALL_CATEGORIES_LABEL ? 0 : 1) +
-    (selectedDifficulty === "all" ? 0 : 1);
+    (selectedDifficulty === 'all' ? 0 : 1);
   const sessionIndex = Math.min(completedInFeed + 1, Math.max(filteredCards.length, 1));
-  const deckLabel = deckMode === "review" ? "Очередь повторения" : "Основная колода";
+  const deckLabel = deckMode === 'review' ? 'Очередь повторения' : 'Основная колода';
 
   const clearFilters = () => {
     setSelectedCategory(ALL_CATEGORIES_LABEL);
-    setSelectedDifficulty("all");
-    setDeckMode("all");
+    setSelectedDifficulty('all');
+    setDeckMode('all');
   };
 
   return {
@@ -75,6 +75,6 @@ export function useLearningDeck({ cards, progress, reviewMeta }: UseLearningDeck
     setSelectedCategory,
     setSelectedDifficulty,
     difficultyOptions,
-    nextCard: remainingCards[1] ?? null
+    nextCard: remainingCards[1] ?? null,
   };
 }

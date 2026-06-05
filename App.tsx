@@ -3,201 +3,201 @@ import 'react-native-gesture-handler';
 import { PlatformPressable } from '@react-navigation/elements';
 import { DefaultTheme, NavigationContainer } from '@react-navigation/native';
 import {
-	BottomTabBarProps,
-	createBottomTabNavigator,
+  BottomTabBarProps,
+  createBottomTabNavigator,
 } from '@react-navigation/bottom-tabs';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View } from 'react-native';
 
 import {
-	LearningProvider,
-	LearningScreen,
-	ProgressScreen,
+  LearningProvider,
+  LearningScreen,
+  ProgressScreen,
 } from './src/features/learning';
 import { CardsIcon, ChartIcon } from './src/shared/components/icons';
 import { palette } from './src/shared/theme';
 
 export type RootTabParamList = {
-	Learn: undefined;
-	Stats: undefined;
+  Learn: undefined;
+  Stats: undefined;
 };
 
 const Tab = createBottomTabNavigator<RootTabParamList>();
 
 const navigationTheme = {
-	...DefaultTheme,
-	colors: {
-		...DefaultTheme.colors,
-		background: palette.background,
-		card: palette.panel,
-		border: palette.border,
-		primary: palette.accent,
-		text: palette.textPrimary,
-		notification: palette.accentStrong,
-	},
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    background: palette.background,
+    card: palette.panel,
+    border: palette.border,
+    primary: palette.accent,
+    text: palette.textPrimary,
+    notification: palette.accentStrong,
+  },
 };
 
 function AppTabBar({ descriptors, navigation, state }: BottomTabBarProps) {
-	return (
-		<View pointerEvents="box-none" style={tabBarStyles.wrap}>
-			<View style={tabBarStyles.bar}>
-				{state.routes.map((route, index) => {
-					const descriptor = descriptors[route.key];
-					const options = descriptor.options;
-					const isFocused = state.index === index;
-					const color = isFocused ? palette.accentStrong : palette.textMuted;
-					const label =
-						typeof options.tabBarLabel === 'string'
-							? options.tabBarLabel
-							: typeof options.title === 'string'
-								? options.title
-								: route.name;
+  return (
+    <View pointerEvents="box-none" style={tabBarStyles.wrap}>
+      <View style={tabBarStyles.bar}>
+        {state.routes.map((route, index) => {
+          const descriptor = descriptors[route.key];
+          const options = descriptor.options;
+          const isFocused = state.index === index;
+          const color = isFocused ? palette.accentStrong : palette.textMuted;
+          const label =
+            typeof options.tabBarLabel === 'string'
+              ? options.tabBarLabel
+              : typeof options.title === 'string'
+                ? options.title
+                : route.name;
 
-					const onPress = () => {
-						const event = navigation.emit({
-							type: 'tabPress',
-							target: route.key,
-							canPreventDefault: true,
-						});
+          const onPress = () => {
+            const event = navigation.emit({
+              type: 'tabPress',
+              target: route.key,
+              canPreventDefault: true,
+            });
 
-						if (!isFocused && !event.defaultPrevented) {
-							navigation.navigate(route.name);
-						}
-					};
+            if (!isFocused && !event.defaultPrevented) {
+              navigation.navigate(route.name);
+            }
+          };
 
-					const onLongPress = () => {
-						navigation.emit({
-							type: 'tabLongPress',
-							target: route.key,
-						});
-					};
+          const onLongPress = () => {
+            navigation.emit({
+              type: 'tabLongPress',
+              target: route.key,
+            });
+          };
 
-					return (
-						<PlatformPressable
-							key={route.key}
-							accessibilityLabel={options.tabBarAccessibilityLabel}
-							accessibilityRole="tab"
-							accessibilityState={isFocused ? { selected: true } : {}}
-							onLongPress={onLongPress}
-							onPress={onPress}
-							style={[
-								tabBarStyles.item,
-								isFocused && tabBarStyles.itemActive,
-								isFocused &&
-									(index === 0
-										? tabBarStyles.itemActiveLeft
-										: tabBarStyles.itemActiveRight),
-							]}
-							testID={options.tabBarButtonTestID}
-						>
-							<View style={tabBarStyles.item__content}>
-								{options.tabBarIcon?.({ color, focused: isFocused, size: 22 })}
-								<Text
-									style={[
-										tabBarStyles.item__label,
-										isFocused && tabBarStyles.item__labelActive,
-									]}
-								>
-									{label}
-								</Text>
-							</View>
-						</PlatformPressable>
-					);
-				})}
-			</View>
-		</View>
-	);
+          return (
+            <PlatformPressable
+              key={route.key}
+              accessibilityLabel={options.tabBarAccessibilityLabel}
+              accessibilityRole="tab"
+              accessibilityState={isFocused ? { selected: true } : {}}
+              onLongPress={onLongPress}
+              onPress={onPress}
+              style={[
+                tabBarStyles.item,
+                isFocused && tabBarStyles.itemActive,
+                isFocused &&
+                  (index === 0
+                    ? tabBarStyles.itemActiveLeft
+                    : tabBarStyles.itemActiveRight),
+              ]}
+              testID={options.tabBarButtonTestID}
+            >
+              <View style={tabBarStyles.item__content}>
+                {options.tabBarIcon?.({ color, focused: isFocused, size: 22 })}
+                <Text
+                  style={[
+                    tabBarStyles.item__label,
+                    isFocused && tabBarStyles.item__labelActive,
+                  ]}
+                >
+                  {label}
+                </Text>
+              </View>
+            </PlatformPressable>
+          );
+        })}
+      </View>
+    </View>
+  );
 }
 
 export default function App() {
-	return (
-		<LearningProvider>
-			<NavigationContainer theme={navigationTheme}>
-				<StatusBar style="light" />
-				<Tab.Navigator
-					tabBar={(props) => <AppTabBar {...props} />}
-					screenOptions={({ route }) => ({
-						headerShown: false,
-						tabBarIcon: ({ color, size }) =>
-							route.name === 'Learn' ? (
-								<CardsIcon color={color} size={size} />
-							) : (
-								<ChartIcon color={color} size={size} />
-							),
-						tabBarHideOnKeyboard: true,
-						sceneStyle: {
-							backgroundColor: palette.background,
-						},
-					})}
-				>
-					<Tab.Screen
-						component={LearningScreen}
-						name="Learn"
-						options={{ title: 'Карточки' }}
-					/>
-					<Tab.Screen
-						component={ProgressScreen}
-						name="Stats"
-						options={{ title: 'Статистика' }}
-					/>
-				</Tab.Navigator>
-			</NavigationContainer>
-		</LearningProvider>
-	);
+  return (
+    <LearningProvider>
+      <NavigationContainer theme={navigationTheme}>
+        <StatusBar style="light" />
+        <Tab.Navigator
+          tabBar={(props) => <AppTabBar {...props} />}
+          screenOptions={({ route }) => ({
+            headerShown: false,
+            tabBarIcon: ({ color, size }) =>
+              route.name === 'Learn' ? (
+                <CardsIcon color={color} size={size} />
+              ) : (
+                <ChartIcon color={color} size={size} />
+              ),
+            tabBarHideOnKeyboard: true,
+            sceneStyle: {
+              backgroundColor: palette.background,
+            },
+          })}
+        >
+          <Tab.Screen
+            component={LearningScreen}
+            name="Learn"
+            options={{ title: 'Карточки' }}
+          />
+          <Tab.Screen
+            component={ProgressScreen}
+            name="Stats"
+            options={{ title: 'Статистика' }}
+          />
+        </Tab.Navigator>
+      </NavigationContainer>
+    </LearningProvider>
+  );
 }
 
 const tabBarStyles = StyleSheet.create({
-	wrap: {
-		position: 'absolute',
-		left: 16,
-		right: 16,
-		bottom: 14,
-	},
-	bar: {
-		flexDirection: 'row',
-		borderWidth: 1,
-		borderColor: palette.border,
-		borderRadius: 24,
-		backgroundColor: palette.footerPanel,
-		shadowColor: '#000000',
-		shadowOffset: { width: 0, height: 12 },
-		shadowOpacity: 0.24,
-		shadowRadius: 24,
-		elevation: 0,
-		overflow: 'hidden',
-	},
-	item: {
-		flex: 1,
-		alignItems: 'center',
-		justifyContent: 'center',
-		paddingVertical: 12,
-		paddingHorizontal: 14,
-	},
-	itemActive: {
-		backgroundColor: 'rgba(130, 245, 208, 0.05)',
-	},
-	itemActiveLeft: {
-		borderRadius: 24,
-		borderTopRightRadius: 0,
-		borderBottomRightRadius: 0,
-	},
-	itemActiveRight: {
-		borderRadius: 24,
-		borderTopLeftRadius: 0,
-		borderBottomLeftRadius: 0,
-	},
-	item__content: {
-		flexDirection: 'row',
-		alignItems: 'center',
-		justifyContent: 'center',
-		gap: 8,
-	},
-	item__label: {
-		color: palette.textMuted,
-		fontSize: 13,
-		fontWeight: '700',
-	},
-	item__labelActive: {
-		color: palette.accentStrong,
-	},
+  wrap: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    bottom: 14,
+  },
+  bar: {
+    flexDirection: 'row',
+    borderWidth: 1,
+    borderColor: palette.border,
+    borderRadius: 24,
+    backgroundColor: palette.footerPanel,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.24,
+    shadowRadius: 24,
+    elevation: 0,
+    overflow: 'hidden',
+  },
+  item: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+  },
+  itemActive: {
+    backgroundColor: 'rgba(130, 245, 208, 0.05)',
+  },
+  itemActiveLeft: {
+    borderRadius: 24,
+    borderTopRightRadius: 0,
+    borderBottomRightRadius: 0,
+  },
+  itemActiveRight: {
+    borderRadius: 24,
+    borderTopLeftRadius: 0,
+    borderBottomLeftRadius: 0,
+  },
+  item__content: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  item__label: {
+    color: palette.textMuted,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  item__labelActive: {
+    color: palette.accentStrong,
+  },
 });

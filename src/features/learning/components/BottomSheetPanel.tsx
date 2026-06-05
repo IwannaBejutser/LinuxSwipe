@@ -1,7 +1,14 @@
-import { ReactNode } from "react";
-import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, View } from "react-native";
+import { ReactNode } from 'react';
+import {
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  StyleSheet,
+  View,
+} from 'react-native';
 
-import { palette } from "../../../shared/theme/palette";
+import { palette } from '../../../shared/theme/palette';
 
 type BottomSheetPanelProps = {
   children: ReactNode;
@@ -14,7 +21,7 @@ export function BottomSheetPanel({
   children,
   keyboardAware = false,
   onClose,
-  visible
+  visible,
 }: BottomSheetPanelProps) {
   const content = (
     <>
@@ -32,7 +39,7 @@ export function BottomSheetPanel({
     <Modal animationType="slide" onRequestClose={onClose} transparent visible={visible}>
       {keyboardAware ? (
         <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={styles.sheet__keyboardHost}
         >
           {content}
@@ -47,19 +54,19 @@ export function BottomSheetPanel({
 const styles = StyleSheet.create({
   sheet__plainHost: {
     flex: 1,
-    justifyContent: "flex-end"
+    justifyContent: 'flex-end',
   },
   sheet__keyboardHost: {
     flex: 1,
-    justifyContent: "flex-end"
+    justifyContent: 'flex-end',
   },
   sheet__backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(3, 10, 19, 0.62)"
+    backgroundColor: 'rgba(3, 10, 19, 0.62)',
   },
   sheet__host: {
     flex: 1,
-    justifyContent: "flex-end"
+    justifyContent: 'flex-end',
   },
   sheet__panel: {
     paddingHorizontal: 18,
@@ -70,13 +77,13 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderColor: palette.border,
     backgroundColor: palette.panelElevated,
-    gap: 18
+    gap: 18,
   },
   sheet__handle: {
-    alignSelf: "center",
+    alignSelf: 'center',
     width: 42,
     height: 5,
     borderRadius: 999,
-    backgroundColor: palette.borderStrong
-  }
+    backgroundColor: palette.borderStrong,
+  },
 });

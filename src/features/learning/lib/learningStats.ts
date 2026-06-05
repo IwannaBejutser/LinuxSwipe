@@ -1,12 +1,12 @@
-import { cards } from "../data/learningCards";
-import { LearningState, LearningStats } from "../types/progress";
-import { getLocalDateStamp } from "./date";
-import { levelFromXp } from "./xp";
+import { cards } from '../data/learningCards';
+import { LearningState, LearningStats } from '../types/progress';
+import { getLocalDateStamp } from './date';
+import { levelFromXp } from './xp';
 
 export const buildStats = (state: LearningState): LearningStats => {
   const progressValues = Object.values(state.progress);
-  const known = progressValues.filter((value) => value === "known").length;
-  const review = progressValues.filter((value) => value === "review").length;
+  const known = progressValues.filter((value) => value === 'known').length;
+  const review = progressValues.filter((value) => value === 'review').length;
   const completed = progressValues.length;
   const total = cards.length;
   const todayCompleted =
@@ -27,10 +27,11 @@ export const buildStats = (state: LearningState): LearningStats => {
     streak: state.streak,
     dailyGoal: state.dailyGoal,
     todayCompleted,
-    dailyGoalProgress: state.dailyGoal === 0 ? 0 : Math.min(todayCompleted / state.dailyGoal, 1),
+    dailyGoalProgress:
+      state.dailyGoal === 0 ? 0 : Math.min(todayCompleted / state.dailyGoal, 1),
     dailyGoalDone: todayCompleted >= state.dailyGoal,
     manualAttempts,
     manualCorrect,
-    manualAccuracy: manualAttempts === 0 ? 0 : manualCorrect / manualAttempts
+    manualAccuracy: manualAttempts === 0 ? 0 : manualCorrect / manualAttempts,
   };
 };

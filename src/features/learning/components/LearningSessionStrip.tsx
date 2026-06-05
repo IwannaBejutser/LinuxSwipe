@@ -1,8 +1,12 @@
-import { ReactNode } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { ReactNode } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 
-import { BoltIcon, ReviewIcon, SparkIcon } from "../../../shared/components/icons/AppIcons";
-import { palette } from "../../../shared/theme/palette";
+import {
+  BoltIcon,
+  ReviewIcon,
+  SparkIcon,
+} from '../../../shared/components/icons/AppIcons';
+import { palette } from '../../../shared/theme/palette';
 
 type LearningSessionStripProps = {
   isCompact?: boolean;
@@ -19,7 +23,7 @@ export function LearningSessionStrip({
   remainingCount,
   reviewCount,
   streak,
-  xp
+  xp,
 }: LearningSessionStripProps) {
   return (
     <View style={[styles.session, isCompact && styles.sessionCompact]}>
@@ -36,22 +40,24 @@ export function LearningSessionStrip({
         <View
           style={[
             styles.session__fill,
-            { width: `${Math.max(progressRatio * 100, 4)}%` }
+            { width: `${Math.max(progressRatio * 100, 4)}%` },
           ]}
         />
       </View>
 
-      <View style={[styles.session__metrics, isCompact && styles.session__metricsCompact]}>
+      <View
+        style={[styles.session__metrics, isCompact && styles.session__metricsCompact]}
+      >
         <SessionMetric
           icon={<BoltIcon color={palette.accentStrong} size={15} />}
           isCompact={isCompact}
-          label="XP"
+          label="Опыт"
           value={xp}
         />
         <SessionMetric
           icon={<SparkIcon color={palette.accentStrong} size={15} />}
           isCompact={isCompact}
-          label="Streak"
+          label="Серия"
           value={streak}
         />
         <SessionMetric
@@ -69,7 +75,7 @@ function SessionMetric({
   icon,
   isCompact = false,
   label,
-  value
+  value,
 }: {
   icon: ReactNode;
   isCompact?: boolean;
@@ -93,59 +99,59 @@ function SessionMetric({
 
 const styles = StyleSheet.create({
   session: {
-    alignSelf: "stretch",
+    alignSelf: 'stretch',
     paddingHorizontal: 14,
     paddingVertical: 12,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: palette.border,
     backgroundColor: palette.overlayPill,
-    gap: 10
+    gap: 10,
   },
   sessionCompact: {
     paddingHorizontal: 12,
     paddingVertical: 10,
-    gap: 8
+    gap: 8,
   },
   session__head: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
   },
   session__lead: {
     color: palette.textPrimary,
     fontSize: 13,
-    fontWeight: "800"
+    fontWeight: '800',
   },
   session__leadCompact: {
-    fontSize: 12
+    fontSize: 12,
   },
   session__value: {
     color: palette.textSecondary,
     fontSize: 12,
-    fontWeight: "800"
+    fontWeight: '800',
   },
   session__valueCompact: {
-    fontSize: 11
+    fontSize: 11,
   },
   session__track: {
     height: 7,
     borderRadius: 999,
-    overflow: "hidden",
-    backgroundColor: palette.track
+    overflow: 'hidden',
+    backgroundColor: palette.track,
   },
   session__fill: {
-    height: "100%",
+    height: '100%',
     borderRadius: 999,
-    backgroundColor: palette.accentStrong
+    backgroundColor: palette.accentStrong,
   },
   session__metrics: {
-    flexDirection: "row",
-    gap: 8
+    flexDirection: 'row',
+    gap: 8,
   },
   session__metricsCompact: {
-    gap: 6
+    gap: 6,
   },
   metric: {
     flex: 1,
@@ -153,34 +159,34 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "rgba(79, 111, 155, 0.18)",
-    backgroundColor: "rgba(9, 18, 34, 0.52)",
-    gap: 4
+    borderColor: 'rgba(79, 111, 155, 0.18)',
+    backgroundColor: 'rgba(9, 18, 34, 0.52)',
+    gap: 4,
   },
   metricCompact: {
     paddingHorizontal: 9,
     paddingVertical: 9,
-    borderRadius: 13
+    borderRadius: 13,
   },
   metric__head: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   metric__label: {
     color: palette.textMuted,
     fontSize: 10,
-    fontWeight: "700"
+    fontWeight: '700',
   },
   metric__labelCompact: {
-    fontSize: 9
+    fontSize: 9,
   },
   metric__value: {
     color: palette.textPrimary,
     fontSize: 15,
-    fontWeight: "800"
+    fontWeight: '800',
   },
   metric__valueCompact: {
-    fontSize: 14
-  }
+    fontSize: 14,
+  },
 });

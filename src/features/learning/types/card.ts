@@ -7,5 +7,5 @@ export type Card = {
   acceptedAnswers?: string[];
   example: string;
   category: string;
-  difficulty: "easy" | "medium" | "hard";
+  difficulty: 'easy' | 'medium' | 'hard';
 };

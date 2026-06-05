@@ -1,5 +1,5 @@
-import { ReactNode } from "react";
-import Svg, { Circle, Path } from "react-native-svg";
+import { ReactNode } from 'react';
+import Svg, { Circle, Path } from 'react-native-svg';
 
 type IconProps = {
   color?: string;
@@ -10,7 +10,7 @@ type IconProps = {
 function IconFrame({
   children,
   size = 20,
-  viewBox = "0 0 32 32"
+  viewBox = '0 0 32 32',
 }: IconProps & {
   children: ReactNode;
   viewBox?: string;
@@ -22,7 +22,11 @@ function IconFrame({
   );
 }
 
-export function FilterIcon({ color = "#f4f7fb", size = 20, strokeWidth = 1.5 }: IconProps) {
+export function FilterIcon({
+  color = '#f4f7fb',
+  size = 20,
+  strokeWidth = 1.5,
+}: IconProps) {
   return (
     <IconFrame size={size}>
       <Path
@@ -36,7 +40,7 @@ export function FilterIcon({ color = "#f4f7fb", size = 20, strokeWidth = 1.5 }: 
   );
 }
 
-export function BoltIcon({ color = "#82f5d0", size = 20 }: IconProps) {
+export function BoltIcon({ color = '#82f5d0', size = 20 }: IconProps) {
   return (
     <IconFrame size={size}>
       <Path
@@ -49,7 +53,7 @@ export function BoltIcon({ color = "#82f5d0", size = 20 }: IconProps) {
   );
 }
 
-export function FlameIcon({ color = "#f4a261", size = 20 }: IconProps) {
+export function FlameIcon({ color = '#f4a261', size = 20 }: IconProps) {
   return (
     <IconFrame size={size}>
       <Path
@@ -62,7 +66,7 @@ export function FlameIcon({ color = "#f4a261", size = 20 }: IconProps) {
   );
 }
 
-export function ReviewIcon({ color = "#f4a261", size = 20 }: IconProps) {
+export function ReviewIcon({ color = '#f4a261', size = 20 }: IconProps) {
   return (
     <IconFrame size={size}>
       <Path
@@ -75,7 +79,11 @@ export function ReviewIcon({ color = "#f4a261", size = 20 }: IconProps) {
   );
 }
 
-export function KeyboardIcon({ color = "#82f5d0", size = 20, strokeWidth = 2 }: IconProps) {
+export function KeyboardIcon({
+  color = '#82f5d0',
+  size = 20,
+  strokeWidth = 2,
+}: IconProps) {
   return (
     <IconFrame size={size}>
       <Path
@@ -89,7 +97,11 @@ export function KeyboardIcon({ color = "#82f5d0", size = 20, strokeWidth = 2 }: 
   );
 }
 
-export function RevealIcon({ color = "#82f5d0", size = 20, strokeWidth = 1.8 }: IconProps) {
+export function RevealIcon({
+  color = '#82f5d0',
+  size = 20,
+  strokeWidth = 1.8,
+}: IconProps) {
   return (
     <IconFrame size={size} viewBox="0 0 24 24">
       <Path
@@ -103,7 +115,7 @@ export function RevealIcon({ color = "#82f5d0", size = 20, strokeWidth = 1.8 }: 
   );
 }
 
-export function CheckIcon({ color = "#82f5d0", size = 20 }: IconProps) {
+export function CheckIcon({ color = '#82f5d0', size = 20 }: IconProps) {
   return (
     <IconFrame size={size}>
       <Path
@@ -114,7 +126,7 @@ export function CheckIcon({ color = "#82f5d0", size = 20 }: IconProps) {
   );
 }
 
-export function CardsIcon({ color = "#82f5d0", size = 20 }: IconProps) {
+export function CardsIcon({ color = '#82f5d0', size = 20 }: IconProps) {
   return (
     <IconFrame size={size}>
       <Path
@@ -125,7 +137,7 @@ export function CardsIcon({ color = "#82f5d0", size = 20 }: IconProps) {
   );
 }
 
-export function ChartIcon({ color = "#82f5d0", size = 20 }: IconProps) {
+export function ChartIcon({ color = '#82f5d0', size = 20 }: IconProps) {
   return (
     <IconFrame size={size}>
       <Path
@@ -142,7 +154,7 @@ export function ChartIcon({ color = "#82f5d0", size = 20 }: IconProps) {
   );
 }
 
-export function TargetIcon({ color = "#82f5d0", size = 20, strokeWidth = 2 }: IconProps) {
+export function TargetIcon({ color = '#82f5d0', size = 20, strokeWidth = 2 }: IconProps) {
   return (
     <IconFrame size={size}>
       <Path
@@ -170,7 +182,11 @@ export function TargetIcon({ color = "#82f5d0", size = 20, strokeWidth = 2 }: Ic
   );
 }
 
-export function SparkIcon({ color = "#82f5d0", size = 20, strokeWidth = 1.8 }: IconProps) {
+export function SparkIcon({
+  color = '#82f5d0',
+  size = 20,
+  strokeWidth = 1.8,
+}: IconProps) {
   return (
     <IconFrame size={size}>
       <Path

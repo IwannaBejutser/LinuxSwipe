@@ -1,13 +1,13 @@
-import { useEffect, useMemo, useRef } from "react";
-import { Animated, PanResponder } from "react-native";
+import { useEffect, useMemo, useRef } from 'react';
+import { Animated, PanResponder } from 'react-native';
 
-import { Card } from "../types/card";
-import { FeedbackTone } from "./useToast";
+import { Card } from '../types/card';
+import { FeedbackTone } from './useToast';
 
 type UseCardSwipeParams = {
   currentCard: Card | null;
-  markCardForReview: (cardId: string, source?: "swipe" | "manual") => Promise<void>;
-  markCardKnown: (cardId: string, source?: "swipe" | "manual") => Promise<void>;
+  markCardForReview: (cardId: string, source?: 'swipe' | 'manual') => Promise<void>;
+  markCardKnown: (cardId: string, source?: 'swipe' | 'manual') => Promise<void>;
   pulseCardFeedback: (tone: FeedbackTone) => void;
   showToast: (tone: FeedbackTone, title: string, body: string) => void;
   swipeOffset: Animated.Value;
@@ -22,7 +22,7 @@ export function useCardSwipe({
   markCardKnown,
   pulseCardFeedback,
   showToast,
-  swipeOffset
+  swipeOffset,
 }: UseCardSwipeParams) {
   const currentCardRef = useRef<Card | null>(null);
   const isCompletingSwipeRef = useRef(false);
@@ -36,32 +36,33 @@ export function useCardSwipe({
       toValue: 0,
       useNativeDriver: true,
       bounciness: 8,
-      speed: 13
+      speed: 13,
     }).start();
   };
 
-  const completeSwipe = (card: Card, direction: "up" | "down") => {
+  const completeSwipe = (card: Card, direction: 'up' | 'down') => {
     if (isCompletingSwipeRef.current) {
       return;
     }
 
     isCompletingSwipeRef.current = true;
-    pulseCardFeedback(direction === "up" ? "success" : "warning");
+    pulseCardFeedback(direction === 'up' ? 'success' : 'warning');
 
     Animated.timing(swipeOffset, {
-      toValue: direction === "up" ? -exitDistance : exitDistance,
+      toValue: direction === 'up' ? -exitDistance : exitDistance,
       duration: 220,
-      useNativeDriver: true
+      useNativeDriver: true,
     }).start(() => {
-      const action = direction === "up" ? markCardKnown(card.id) : markCardForReview(card.id);
+      const action =
+        direction === 'up' ? markCardKnown(card.id) : markCardForReview(card.id);
 
       void action.finally(() => {
         showToast(
-          direction === "up" ? "success" : "warning",
-          direction === "up" ? "+10 XP" : "Добавлено на повтор",
-          direction === "up"
-            ? "Карточка ушла в уверенно знакомые."
-            : "Команда вернется в поток раньше остальных."
+          direction === 'up' ? 'success' : 'warning',
+          direction === 'up' ? '+10 опыта' : 'Добавлено на повтор',
+          direction === 'up'
+            ? 'Карточка ушла в уверенно знакомые.'
+            : 'Команда вернется в поток раньше остальных.',
         );
         swipeOffset.setValue(0);
         isCompletingSwipeRef.current = false;
@@ -96,27 +97,27 @@ export function useCardSwipe({
           }
 
           if (gestureState.dy <= -swipeThreshold) {
-            completeSwipe(liveCard, "up");
+            completeSwipe(liveCard, 'up');
             return;
           }
 
           if (gestureState.dy >= swipeThreshold) {
-            completeSwipe(liveCard, "down");
+            completeSwipe(liveCard, 'down');
             return;
           }
 
           resetCardPosition();
         },
         onPanResponderTerminate: resetCardPosition,
-        onPanResponderTerminationRequest: () => false
+        onPanResponderTerminationRequest: () => false,
       }),
-    [swipeOffset]
+    [swipeOffset],
   );
 
   return {
     completeSwipe,
     isCompletingSwipeRef,
     panResponder,
-    resetCardPosition
+    resetCardPosition,
   };
 }

@@ -1,4 +1,4 @@
-import { Card } from "../types/card";
+import { Card } from '../types/card';
 
 export type ManualAnswerResult = {
   body: string;
@@ -11,13 +11,13 @@ export function normalizeCommand(value: string) {
     .trim()
     .replace(/[“”]/g, '"')
     .replace(/[‘’]/g, "'")
-    .replace(/\s*\|\s*/g, " | ")
-    .replace(/\s+/g, " ")
+    .replace(/\s*\|\s*/g, ' | ')
+    .replace(/\s+/g, ' ')
     .toLowerCase();
 }
 
 export function stripLeadingSudo(value: string) {
-  return value.replace(/^sudo\s+/i, "");
+  return value.replace(/^sudo\s+/i, '');
 }
 
 export function withSingleQuotes(value: string) {
@@ -25,7 +25,7 @@ export function withSingleQuotes(value: string) {
 }
 
 export function withoutSimpleQuotes(value: string) {
-  return value.replace(/(["'])([^"'`\s]+)\1/g, "$2");
+  return value.replace(/(["'])([^"'`\s]+)\1/g, '$2');
 }
 
 export function buildAcceptedCommands(card: Card) {
@@ -37,7 +37,7 @@ export function buildAcceptedCommands(card: Card) {
       answer,
       withSingleQuotes(answer),
       withoutSimpleQuotes(answer),
-      withSingleQuotes(withoutSimpleQuotes(answer))
+      withSingleQuotes(withoutSimpleQuotes(answer)),
     ];
 
     localVariants.forEach((variant) => {
@@ -64,22 +64,22 @@ export function evaluateManualAnswer(card: Card, value: string): ManualAnswerRes
 
   if (!normalizedValue) {
     return {
-      body: "Введите ответ целиком, как если бы вы печатали его в терминале.",
+      body: 'Введите ответ целиком, как если бы вы печатали его в терминале.',
       correct: false,
-      title: "Нужна команда"
+      title: 'Нужна команда',
     };
   }
 
   if (buildAcceptedCommands(card).has(normalizedValue)) {
     return {
-      body: "Хорошо. Такой ответ можно честно засчитать в уверенное знание.",
+      body: 'Хорошо. Такой ответ можно честно засчитать в уверенное знание.',
       correct: true,
-      title: "Верно"
+      title: 'Верно',
     };
   }
 
-  const inputTokens = normalizedValue.split(" ");
-  const answerTokens = normalizedAnswer.split(" ");
+  const inputTokens = normalizedValue.split(' ');
+  const answerTokens = normalizedAnswer.split(' ');
   const sharedTokens = inputTokens.filter((token) => answerTokens.includes(token)).length;
   const isCloseMatch =
     sharedTokens >= Math.max(answerTokens.length - 1, 1) ||
@@ -87,15 +87,15 @@ export function evaluateManualAnswer(card: Card, value: string): ManualAnswerRes
 
   if (isCloseMatch) {
     return {
-      body: "Основа верная. Проверьте один флаг, кавычки или последний аргумент.",
+      body: 'Основа верная. Проверьте один флаг, кавычки или последний аргумент.',
       correct: false,
-      title: "Почти получилось"
+      title: 'Почти получилось',
     };
   }
 
   return {
-    body: "Попробуйте еще раз, переверните карточку или отправьте ее на повтор.",
+    body: 'Попробуйте еще раз, переверните карточку или отправьте ее на повтор.',
     correct: false,
-    title: "Пока мимо"
+    title: 'Пока мимо',
   };
 }

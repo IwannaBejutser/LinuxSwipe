@@ -1,8 +1,8 @@
-import { ReactNode } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { ReactNode } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { CheckIcon, ReviewIcon } from "../../../shared/components/icons/AppIcons";
-import { palette } from "../../../shared/theme/palette";
+import { CheckIcon, ReviewIcon } from '../../../shared/components/icons/AppIcons';
+import { palette } from '../../../shared/theme/palette';
 
 type LearningEmptyStateProps = {
   body: string;
@@ -29,7 +29,7 @@ export function LearningEmptyState({
   review = 0,
   secondaryLabel,
   showStats = false,
-  title
+  title,
 }: LearningEmptyStateProps) {
   return (
     <View style={styles.empty}>
@@ -56,7 +56,9 @@ export function LearningEmptyState({
 
       {onOpenReview ? (
         <Pressable onPress={onOpenReview} style={styles.empty__secondaryAction}>
-          <Text style={styles.empty__secondaryActionText}>Открыть карточки на повторе</Text>
+          <Text style={styles.empty__secondaryActionText}>
+            Открыть карточки на повторе
+          </Text>
         </Pressable>
       ) : null}
 
@@ -77,15 +79,17 @@ function CompletionChip({
   icon,
   label,
   tone,
-  value
+  value,
 }: {
   icon: ReactNode;
   label: string;
-  tone: "success" | "warning";
+  tone: 'success' | 'warning';
   value: number;
 }) {
   return (
-    <View style={[styles.chip, tone === "success" ? styles.chipSuccess : styles.chipWarning]}>
+    <View
+      style={[styles.chip, tone === 'success' ? styles.chipSuccess : styles.chipWarning]}
+    >
       <View style={styles.chip__icon}>{icon}</View>
       <Text style={styles.chip__value}>{value}</Text>
       <Text style={styles.chip__label}>{label}</Text>
@@ -96,31 +100,31 @@ function CompletionChip({
 const styles = StyleSheet.create({
   empty: {
     flex: 1,
-    justifyContent: "center",
+    justifyContent: 'center',
     paddingHorizontal: 24,
-    gap: 16
+    gap: 16,
   },
   empty__eyebrow: {
     color: palette.accentStrong,
     fontSize: 12,
-    fontWeight: "800",
+    fontWeight: '800',
     letterSpacing: 1.4,
-    textTransform: "uppercase"
+    textTransform: 'uppercase',
   },
   empty__title: {
     color: palette.textPrimary,
     fontSize: 30,
-    fontWeight: "900",
-    lineHeight: 36
+    fontWeight: '900',
+    lineHeight: 36,
   },
   empty__body: {
     color: palette.textSecondary,
     fontSize: 16,
-    lineHeight: 24
+    lineHeight: 24,
   },
   empty__statsRow: {
-    flexDirection: "row",
-    gap: 12
+    flexDirection: 'row',
+    gap: 12,
   },
   chip: {
     flex: 1,
@@ -130,54 +134,54 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: palette.border,
     gap: 4,
-    alignItems: "center"
+    alignItems: 'center',
   },
   chipSuccess: {
-    backgroundColor: palette.successPanel
+    backgroundColor: palette.successPanel,
   },
   chipWarning: {
-    backgroundColor: palette.warningPanel
+    backgroundColor: palette.warningPanel,
   },
   chip__icon: {
     width: 32,
     height: 32,
     borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.04)"
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
   },
   chip__value: {
     color: palette.textPrimary,
     fontSize: 18,
-    fontWeight: "900"
+    fontWeight: '900',
   },
   chip__label: {
     color: palette.textMuted,
     fontSize: 11,
-    fontWeight: "700"
+    fontWeight: '700',
   },
   empty__primaryAction: {
     backgroundColor: palette.accentStrong,
     borderRadius: 20,
     paddingVertical: 16,
-    alignItems: "center"
+    alignItems: 'center',
   },
   empty__primaryActionText: {
     color: palette.background,
     fontSize: 16,
-    fontWeight: "900"
+    fontWeight: '900',
   },
   empty__secondaryAction: {
     backgroundColor: palette.overlayPill,
     borderRadius: 20,
     paddingVertical: 16,
-    alignItems: "center",
+    alignItems: 'center',
     borderWidth: 1,
-    borderColor: palette.border
+    borderColor: palette.border,
   },
   empty__secondaryActionText: {
     color: palette.textPrimary,
     fontSize: 15,
-    fontWeight: "800"
-  }
+    fontWeight: '800',
+  },
 });

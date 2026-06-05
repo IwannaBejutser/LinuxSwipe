@@ -1,7 +1,7 @@
-import { useEffect, useRef } from "react";
-import { Animated, Easing, StyleSheet, useWindowDimensions, View } from "react-native";
+import { useEffect, useRef } from 'react';
+import { Animated, Easing, StyleSheet, useWindowDimensions, View } from 'react-native';
 
-import { palette } from "../theme/palette";
+import { palette } from '../theme/palette';
 
 export function AnimatedBackdrop() {
   const { height, width } = useWindowDimensions();
@@ -16,15 +16,15 @@ export function AnimatedBackdrop() {
           toValue: 1,
           duration: 12000,
           easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true
+          useNativeDriver: true,
         }),
         Animated.timing(beamDrift, {
           toValue: 0,
           duration: 12000,
           easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true
-        })
-      ])
+          useNativeDriver: true,
+        }),
+      ]),
     );
 
     const sheetLoop = Animated.loop(
@@ -33,15 +33,15 @@ export function AnimatedBackdrop() {
           toValue: 1,
           duration: 16000,
           easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true
+          useNativeDriver: true,
         }),
         Animated.timing(sheetFloat, {
           toValue: 0,
           duration: 16000,
           easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true
-        })
-      ])
+          useNativeDriver: true,
+        }),
+      ]),
     );
 
     const scanlineLoop = Animated.loop(
@@ -50,15 +50,15 @@ export function AnimatedBackdrop() {
           toValue: 1,
           duration: 9000,
           easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true
+          useNativeDriver: true,
         }),
         Animated.timing(scanlineShift, {
           toValue: 0,
           duration: 9000,
           easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true
-        })
-      ])
+          useNativeDriver: true,
+        }),
+      ]),
     );
 
     beamLoop.start();
@@ -74,37 +74,37 @@ export function AnimatedBackdrop() {
 
   const beamTranslateX = beamDrift.interpolate({
     inputRange: [0, 1],
-    outputRange: [-width * 0.1, width * 0.08]
+    outputRange: [-width * 0.1, width * 0.08],
   });
   const beamTranslateY = beamDrift.interpolate({
     inputRange: [0, 1],
-    outputRange: [-18, 14]
+    outputRange: [-18, 14],
   });
   const beamOpacity = beamDrift.interpolate({
     inputRange: [0, 0.5, 1],
-    outputRange: [0.2, 0.36, 0.24]
+    outputRange: [0.2, 0.36, 0.24],
   });
 
   const sheetTranslateX = sheetFloat.interpolate({
     inputRange: [0, 1],
-    outputRange: [width * 0.05, -width * 0.04]
+    outputRange: [width * 0.05, -width * 0.04],
   });
   const sheetTranslateY = sheetFloat.interpolate({
     inputRange: [0, 1],
-    outputRange: [10, -16]
+    outputRange: [10, -16],
   });
   const sheetOpacity = sheetFloat.interpolate({
     inputRange: [0, 0.5, 1],
-    outputRange: [0.22, 0.32, 0.24]
+    outputRange: [0.22, 0.32, 0.24],
   });
 
   const scanlineTranslateY = scanlineShift.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, 22]
+    outputRange: [0, 22],
   });
   const scanlineOpacity = scanlineShift.interpolate({
     inputRange: [0, 0.5, 1],
-    outputRange: [0.22, 0.08, 0.22]
+    outputRange: [0.22, 0.08, 0.22],
   });
 
   return (
@@ -118,8 +118,8 @@ export function AnimatedBackdrop() {
           styles.backdrop__beamMint,
           {
             opacity: beamOpacity,
-            transform: [{ translateX: beamTranslateX }, { translateY: beamTranslateY }]
-          }
+            transform: [{ translateX: beamTranslateX }, { translateY: beamTranslateY }],
+          },
         ]}
       />
       <Animated.View
@@ -127,8 +127,8 @@ export function AnimatedBackdrop() {
           styles.backdrop__beamBlue,
           {
             opacity: sheetOpacity,
-            transform: [{ translateX: sheetTranslateX }, { translateY: sheetTranslateY }]
-          }
+            transform: [{ translateX: sheetTranslateX }, { translateY: sheetTranslateY }],
+          },
         ]}
       />
       <Animated.View
@@ -136,8 +136,8 @@ export function AnimatedBackdrop() {
           styles.backdrop__sheet,
           {
             opacity: sheetOpacity,
-            transform: [{ translateX: sheetTranslateX }, { translateY: sheetTranslateY }]
-          }
+            transform: [{ translateX: sheetTranslateX }, { translateY: sheetTranslateY }],
+          },
         ]}
       />
 
@@ -147,13 +147,13 @@ export function AnimatedBackdrop() {
       <Animated.View
         style={[
           styles.backdrop__scanlineTop,
-          { opacity: scanlineOpacity, transform: [{ translateY: scanlineTranslateY }] }
+          { opacity: scanlineOpacity, transform: [{ translateY: scanlineTranslateY }] },
         ]}
       />
       <Animated.View
         style={[
           styles.backdrop__scanlineBottom,
-          { opacity: scanlineOpacity, transform: [{ translateY: scanlineTranslateY }] }
+          { opacity: scanlineOpacity, transform: [{ translateY: scanlineTranslateY }] },
         ]}
       />
     </View>
@@ -162,88 +162,88 @@ export function AnimatedBackdrop() {
 
 const styles = StyleSheet.create({
   backdrop: {
-    ...StyleSheet.absoluteFillObject
+    ...StyleSheet.absoluteFillObject,
   },
   backdrop__base: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: palette.background
+    backgroundColor: palette.background,
   },
   backdrop__vignetteTop: {
-    position: "absolute",
+    position: 'absolute',
     top: -40,
     left: 0,
     right: 0,
     height: 180,
-    backgroundColor: "rgba(0, 0, 0, 0.24)"
+    backgroundColor: 'rgba(0, 0, 0, 0.24)',
   },
   backdrop__vignetteBottom: {
-    position: "absolute",
+    position: 'absolute',
     left: 0,
     right: 0,
     bottom: -30,
     height: 200,
-    backgroundColor: "rgba(0, 0, 0, 0.34)"
+    backgroundColor: 'rgba(0, 0, 0, 0.34)',
   },
   backdrop__beamMint: {
-    position: "absolute",
+    position: 'absolute',
     top: 8,
     left: -120,
     width: 420,
     height: 180,
     borderRadius: 42,
     backgroundColor: palette.glowMint,
-    transform: [{ rotate: "-14deg" }]
+    transform: [{ rotate: '-14deg' }],
   },
   backdrop__beamBlue: {
-    position: "absolute",
+    position: 'absolute',
     top: 180,
     right: -160,
     width: 520,
     height: 240,
     borderRadius: 56,
     backgroundColor: palette.glowBlue,
-    transform: [{ rotate: "12deg" }]
+    transform: [{ rotate: '12deg' }],
   },
   backdrop__sheet: {
-    position: "absolute",
+    position: 'absolute',
     bottom: 70,
     left: -60,
     width: 380,
     height: 180,
     borderRadius: 36,
     backgroundColor: palette.backdropPanel,
-    transform: [{ rotate: "-10deg" }]
+    transform: [{ rotate: '-10deg' }],
   },
   backdrop__gridLeft: {
-    position: "absolute",
+    position: 'absolute',
     top: 0,
     bottom: 0,
     left: 30,
     width: 1,
-    backgroundColor: palette.backdropLine
+    backgroundColor: palette.backdropLine,
   },
   backdrop__gridRight: {
-    position: "absolute",
+    position: 'absolute',
     top: 0,
     bottom: 0,
     right: 30,
     width: 1,
-    backgroundColor: palette.backdropLine
+    backgroundColor: palette.backdropLine,
   },
   backdrop__scanlineTop: {
-    position: "absolute",
+    position: 'absolute',
     top: 92,
     left: 30,
     right: 30,
     height: 1,
-    backgroundColor: palette.backdropLine
+    backgroundColor: palette.backdropLine,
   },
   backdrop__scanlineBottom: {
-    position: "absolute",
+    position: 'absolute',
     bottom: 138,
     left: 30,
     right: 30,
     height: 1,
-    backgroundColor: palette.backdropLine
-  }
+    backgroundColor: palette.backdropLine,
+  },
 });

@@ -1,0 +1,9 @@
+node_modules/
+.expo/
+dist/
+dist-prod/
+web-build/
+.tmp-edge-profile/
+tmp-*.png
+prod-*.png
+package-lock.json

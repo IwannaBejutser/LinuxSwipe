@@ -1,8 +1,12 @@
-import { diffInDays, getLocalDateStamp } from "../lib/date";
-import { getXpGain, MarkSource } from "../lib/xp";
-import { CardOutcome, LearningState } from "../types/progress";
+import { diffInDays, getLocalDateStamp } from '../lib/date';
+import { getXpGain, MarkSource } from '../lib/xp';
+import { CardOutcome, LearningState } from '../types/progress';
 
-export function bumpStreak(currentStreak: number, lastActiveOn: null | string, today: string) {
+export function bumpStreak(
+  currentStreak: number,
+  lastActiveOn: null | string,
+  today: string,
+) {
   if (!lastActiveOn) {
     return 1;
   }
@@ -24,16 +28,16 @@ export function buildNextState(
   previousState: LearningState,
   cardId: string,
   outcome: CardOutcome,
-  source: MarkSource
+  source: MarkSource,
 ): LearningState {
   const today = getLocalDateStamp();
   const nextReviewMeta = { ...previousState.reviewMeta };
 
-  if (outcome === "review") {
+  if (outcome === 'review') {
     const currentCount = nextReviewMeta[cardId]?.count ?? 0;
     nextReviewMeta[cardId] = {
       count: currentCount + 1,
-      lastReviewedOn: today
+      lastReviewedOn: today,
     };
   } else {
     delete nextReviewMeta[cardId];
@@ -42,7 +46,7 @@ export function buildNextState(
   return {
     progress: {
       ...previousState.progress,
-      [cardId]: outcome
+      [cardId]: outcome,
     },
     reviewMeta: nextReviewMeta,
     xp: previousState.xp + getXpGain(outcome, source),
@@ -53,18 +57,18 @@ export function buildNextState(
       previousState.dailyProgress.date === today
         ? {
             date: today,
-            completed: previousState.dailyProgress.completed + 1
+            completed: previousState.dailyProgress.completed + 1,
           }
         : {
             date: today,
-            completed: 1
+            completed: 1,
           },
     manualStats:
-      source === "manual"
+      source === 'manual'
         ? {
             attempts: previousState.manualStats.attempts + 1,
-            correct: previousState.manualStats.correct + (outcome === "known" ? 1 : 0)
+            correct: previousState.manualStats.correct + (outcome === 'known' ? 1 : 0),
           }
-        : previousState.manualStats
+        : previousState.manualStats,
   };
 }

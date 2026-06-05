@@ -1,8 +1,8 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { LearningState } from "../types/progress";
+import { LearningState } from '../types/progress';
 
-const STORAGE_KEY = "linuxswipe.learning-state";
+const STORAGE_KEY = 'linuxswipe.learning-state';
 
 export async function loadLearningState(): Promise<LearningState | null> {
   try {

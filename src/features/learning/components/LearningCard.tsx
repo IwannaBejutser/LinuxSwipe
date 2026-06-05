@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode } from 'react';
 import {
   Animated,
   GestureResponderHandlers,
@@ -6,12 +6,13 @@ import {
   StyleSheet,
   Text,
   useWindowDimensions,
-  View
-} from "react-native";
+  View,
+} from 'react-native';
 
-import { CheckIcon, SparkIcon } from "../../../shared/components/icons/AppIcons";
-import { Card } from "../types/card";
-import { palette } from "../../../shared/theme/palette";
+import { CheckIcon, SparkIcon } from '../../../shared/components/icons/AppIcons';
+import { Card } from '../types/card';
+import { getCategoryLabel } from '../lib/category';
+import { palette } from '../../../shared/theme/palette';
 
 type LearningCardProps = {
   currentCard: Card;
@@ -44,7 +45,7 @@ export function LearningCard({
   sessionTotal,
   successGlow,
   swipeOffset,
-  warningGlow
+  warningGlow,
 }: LearningCardProps) {
   const { width } = useWindowDimensions();
   const isNarrow = isCompact || width < 390;
@@ -54,36 +55,36 @@ export function LearningCard({
   const swipeUpOpacity = swipeOffset.interpolate({
     inputRange: [-180, -40, 0],
     outputRange: [0.18, 0.05, 0],
-    extrapolate: "clamp"
+    extrapolate: 'clamp',
   });
   const swipeDownOpacity = swipeOffset.interpolate({
     inputRange: [0, 40, 180],
     outputRange: [0, 0.05, 0.18],
-    extrapolate: "clamp"
+    extrapolate: 'clamp',
   });
   const cardRotation = swipeOffset.interpolate({
     inputRange: [-180, 0, 180],
-    outputRange: ["-4deg", "0deg", "4deg"]
+    outputRange: ['-4deg', '0deg', '4deg'],
   });
   const cardScale = swipeOffset.interpolate({
     inputRange: [-180, 0, 180],
-    outputRange: [0.988, 1, 0.988]
+    outputRange: [0.988, 1, 0.988],
   });
   const frontFaceRotation = flipProgress.interpolate({
     inputRange: [0, 1],
-    outputRange: ["0deg", "180deg"]
+    outputRange: ['0deg', '180deg'],
   });
   const backFaceRotation = flipProgress.interpolate({
     inputRange: [0, 1],
-    outputRange: ["180deg", "360deg"]
+    outputRange: ['180deg', '360deg'],
   });
   const frontFaceOpacity = flipProgress.interpolate({
     inputRange: [0, 0.49, 0.5, 1],
-    outputRange: [1, 1, 0, 0]
+    outputRange: [1, 1, 0, 0],
   });
   const backFaceOpacity = flipProgress.interpolate({
     inputRange: [0, 0.5, 0.51, 1],
-    outputRange: [0, 0, 1, 1]
+    outputRange: [0, 0, 1, 1],
   });
   const sessionProgress = sessionTotal === 0 ? 0 : sessionIndex / sessionTotal;
 
@@ -107,9 +108,9 @@ export function LearningCard({
             transform: [
               { translateY: swipeOffset },
               { rotate: cardRotation },
-              { scale: cardScale }
-            ]
-          }
+              { scale: cardScale },
+            ],
+          },
         ]}
       >
         <Animated.View
@@ -130,13 +131,13 @@ export function LearningCard({
         />
 
         <Animated.View
-          pointerEvents={isCardFlipped ? "none" : "auto"}
+          pointerEvents={isCardFlipped ? 'none' : 'auto'}
           style={[
             styles.cardFace,
             {
               opacity: frontFaceOpacity,
-              transform: [{ perspective: 1400 }, { rotateY: frontFaceRotation }]
-            }
+              transform: [{ perspective: 1400 }, { rotateY: frontFaceRotation }],
+            },
           ]}
         >
           <Pressable onPress={onToggleFace} style={styles.cardFace__pressable}>
@@ -144,7 +145,7 @@ export function LearningCard({
               <MetaPill
                 align="flex-start"
                 isCompact={isNarrow}
-                label={currentCard.category}
+                label={getCategoryLabel(currentCard.category)}
                 variant="category"
               />
               <MetaPill
@@ -164,29 +165,39 @@ export function LearningCard({
             <View
               style={[
                 styles.cardFace__questionBlock,
-                isNarrow && styles.cardFace__questionBlockCompact
+                isNarrow && styles.cardFace__questionBlockCompact,
               ]}
             >
-              <Text style={[styles.cardFace__eyebrow, isNarrow && styles.cardFace__eyebrowCompact]}>
+              <Text
+                style={[
+                  styles.cardFace__eyebrow,
+                  isNarrow && styles.cardFace__eyebrowCompact,
+                ]}
+              >
                 Сценарий
               </Text>
               <Text
                 style={[
                   styles.cardFace__question,
                   isNarrow && styles.cardFace__questionCompact,
-                  { fontSize: questionFontSize, lineHeight: questionLineHeight }
+                  { fontSize: questionFontSize, lineHeight: questionLineHeight },
                 ]}
               >
                 {currentCard.question}
               </Text>
             </View>
 
-            <View style={[styles.cardFace__footer, isNarrow && styles.cardFace__footerCompact]}>
+            <View
+              style={[
+                styles.cardFace__footer,
+                isNarrow && styles.cardFace__footerCompact,
+              ]}
+            >
               <View style={styles.cardFace__footerHead}>
                 <Text
                   style={[
                     styles.cardFace__footerTitle,
-                    isNarrow && styles.cardFace__footerTitleCompact
+                    isNarrow && styles.cardFace__footerTitleCompact,
                   ]}
                 >
                   {deckLabel}
@@ -199,7 +210,7 @@ export function LearningCard({
                 <View
                   style={[
                     styles.cardFace__footerFill,
-                    { width: `${Math.max(sessionProgress * 100, 4)}%` }
+                    { width: `${Math.max(sessionProgress * 100, 4)}%` },
                   ]}
                 />
               </View>
@@ -208,14 +219,14 @@ export function LearningCard({
         </Animated.View>
 
         <Animated.View
-          pointerEvents={isCardFlipped ? "auto" : "none"}
+          pointerEvents={isCardFlipped ? 'auto' : 'none'}
           style={[
             styles.cardFace,
             styles.cardFaceBack,
             {
               opacity: backFaceOpacity,
-              transform: [{ perspective: 1400 }, { rotateY: backFaceRotation }]
-            }
+              transform: [{ perspective: 1400 }, { rotateY: backFaceRotation }],
+            },
           ]}
         >
           <View style={styles.cardFace__pressable}>
@@ -223,7 +234,7 @@ export function LearningCard({
               <MetaPill
                 align="flex-start"
                 isCompact={isNarrow}
-                label={currentCard.category}
+                label={getCategoryLabel(currentCard.category)}
                 variant="category"
               />
               <MetaPill
@@ -258,10 +269,16 @@ export function LearningCard({
               </View>
 
               <View style={styles.cardFaceBack__actions}>
-                <Pressable onPress={onToggleFace} style={styles.cardFaceBack__ghostButton}>
+                <Pressable
+                  onPress={onToggleFace}
+                  style={styles.cardFaceBack__ghostButton}
+                >
                   <Text style={styles.cardFaceBack__ghostButtonText}>Назад</Text>
                 </Pressable>
-                <Pressable onPress={onOpenDetails} style={styles.cardFaceBack__primaryButton}>
+                <Pressable
+                  onPress={onOpenDetails}
+                  style={styles.cardFaceBack__primaryButton}
+                >
                   <Text style={styles.cardFaceBack__primaryButtonText}>Подробнее</Text>
                 </Pressable>
               </View>
@@ -277,22 +294,22 @@ function MetaPill({
   align,
   isCompact = false,
   label,
-  variant = "category"
+  variant = 'category',
 }: {
-  align: "center" | "flex-end" | "flex-start";
+  align: 'center' | 'flex-end' | 'flex-start';
   isCompact?: boolean;
   label: string;
-  variant?: "category" | "difficulty" | "index";
+  variant?: 'category' | 'difficulty' | 'index';
 }) {
   return (
     <View
       style={[
         styles.metaPill,
-        variant === "category" && styles.metaPillCategory,
-        variant === "index" && styles.metaPillIndex,
-        variant === "difficulty" && styles.metaPillDifficulty,
+        variant === 'category' && styles.metaPillCategory,
+        variant === 'index' && styles.metaPillIndex,
+        variant === 'difficulty' && styles.metaPillDifficulty,
         isCompact && styles.metaPillCompact,
-        { alignItems: align }
+        { alignItems: align },
       ]}
     >
       <Text
@@ -309,40 +326,40 @@ function SurfaceCard({
   body,
   icon,
   title,
-  tone
+  tone,
 }: {
   body: string;
   icon: ReactNode;
   title: string;
-  tone: "accent" | "default" | "subtle";
+  tone: 'accent' | 'default' | 'subtle';
 }) {
   return (
     <View
       style={[
         styles.surface,
-        tone === "accent" && styles.surfaceAccent,
-        tone === "subtle" && styles.surfaceSubtle
+        tone === 'accent' && styles.surfaceAccent,
+        tone === 'subtle' && styles.surfaceSubtle,
       ]}
     >
       <View style={styles.surface__head}>
         {icon}
         <Text style={styles.surface__label}>{title}</Text>
       </View>
-      <Text style={tone === "accent" ? styles.surface__answer : styles.surface__body}>
+      <Text style={tone === 'accent' ? styles.surface__answer : styles.surface__body}>
         {body}
       </Text>
     </View>
   );
 }
 
-function getDifficultyLabel(value: Card["difficulty"]) {
+function getDifficultyLabel(value: Card['difficulty']) {
   switch (value) {
-    case "easy":
-      return "Легко";
-    case "medium":
-      return "Средне";
-    case "hard":
-      return "Сложно";
+    case 'easy':
+      return 'Легко';
+    case 'medium':
+      return 'Средне';
+    case 'hard':
+      return 'Сложно';
     default:
       return value;
   }
@@ -350,235 +367,235 @@ function getDifficultyLabel(value: Card["difficulty"]) {
 
 const styles = StyleSheet.create({
   cardStage: {
-    alignSelf: "stretch",
+    alignSelf: 'stretch',
     flex: 1,
     minHeight: 0,
     paddingBottom: 2,
-    overflow: "visible",
-    position: "relative",
+    overflow: 'visible',
+    position: 'relative',
     zIndex: 20,
-    elevation: 20
+    elevation: 20,
   },
   cardStage__queueCard: {
-    position: "absolute",
+    position: 'absolute',
     left: 28,
     right: 28,
     top: 12,
     bottom: 22,
     borderRadius: 32,
     borderWidth: 1,
-    borderColor: "rgba(92, 117, 159, 0.24)",
-    backgroundColor: "rgba(18, 29, 49, 0.54)",
-    padding: 24
+    borderColor: 'rgba(92, 117, 159, 0.24)',
+    backgroundColor: 'rgba(18, 29, 49, 0.54)',
+    padding: 24,
   },
   cardStage__queueGlow: {
-    position: "absolute",
+    position: 'absolute',
     left: 24,
     right: 24,
     bottom: 22,
     height: 92,
     borderRadius: 24,
-    backgroundColor: "rgba(130, 245, 208, 0.06)"
+    backgroundColor: 'rgba(130, 245, 208, 0.06)',
   },
   cardStage__queueEyebrow: {
     color: palette.textMuted,
     fontSize: 11,
-    fontWeight: "800",
+    fontWeight: '800',
     letterSpacing: 1.2,
-    textTransform: "uppercase"
+    textTransform: 'uppercase',
   },
   cardStage__queueQuestion: {
     marginTop: 12,
     color: palette.textSecondary,
     fontSize: 16,
     lineHeight: 22,
-    fontWeight: "700",
-    maxWidth: "84%"
+    fontWeight: '700',
+    maxWidth: '84%',
   },
   card: {
     flex: 1,
-    position: "relative",
+    position: 'relative',
     borderRadius: 34,
     borderWidth: 1,
     borderColor: palette.border,
     backgroundColor: palette.panelElevated,
-    overflow: "hidden",
-    shadowColor: "#000000",
+    overflow: 'hidden',
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 18 },
     shadowOpacity: 0.28,
     shadowRadius: 30,
     elevation: 24,
-    zIndex: 24
+    zIndex: 24,
   },
   card__glowSuccess: {
     ...StyleSheet.absoluteFillObject,
     borderRadius: 34,
     borderWidth: 1.5,
     borderColor: palette.accentStrong,
-    backgroundColor: "rgba(130, 245, 208, 0.06)"
+    backgroundColor: 'rgba(130, 245, 208, 0.06)',
   },
   card__glowWarning: {
     ...StyleSheet.absoluteFillObject,
     borderRadius: 34,
     borderWidth: 1.5,
-    borderColor: "#f4a261",
-    backgroundColor: "rgba(170, 98, 41, 0.08)"
+    borderColor: '#f4a261',
+    backgroundColor: 'rgba(170, 98, 41, 0.08)',
   },
   card__swipeAuraTop: {
-    position: "absolute",
+    position: 'absolute',
     left: 0,
     right: 0,
     top: 0,
-    height: "24%",
-    backgroundColor: "rgba(49, 141, 109, 0.24)"
+    height: '24%',
+    backgroundColor: 'rgba(49, 141, 109, 0.24)',
   },
   card__swipeAuraBottom: {
-    position: "absolute",
+    position: 'absolute',
     left: 0,
     right: 0,
     bottom: 0,
-    height: "24%",
-    backgroundColor: "rgba(144, 85, 42, 0.24)"
+    height: '24%',
+    backgroundColor: 'rgba(144, 85, 42, 0.24)',
   },
   cardFace: {
     ...StyleSheet.absoluteFillObject,
     padding: 20,
-    backfaceVisibility: "hidden"
+    backfaceVisibility: 'hidden',
   },
   cardFaceBack: {
-    backgroundColor: palette.panelElevated
+    backgroundColor: palette.panelElevated,
   },
   cardFace__pressable: {
-    flex: 1
+    flex: 1,
   },
   cardFace__metaRail: {
-    width: "100%",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 8
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
   },
   cardFace__questionBlock: {
     flex: 1,
-    justifyContent: "center",
+    justifyContent: 'center',
     paddingTop: 10,
     paddingBottom: 16,
-    gap: 10
+    gap: 10,
   },
   cardFace__questionBlockCompact: {
     paddingTop: 6,
     paddingBottom: 12,
-    gap: 8
+    gap: 8,
   },
   cardFace__eyebrow: {
     color: palette.textMuted,
     fontSize: 12,
-    fontWeight: "800",
+    fontWeight: '800',
     letterSpacing: 1.3,
-    textTransform: "uppercase"
+    textTransform: 'uppercase',
   },
   cardFace__eyebrowCompact: {
-    fontSize: 11
+    fontSize: 11,
   },
   cardFace__question: {
-    maxWidth: "100%",
+    maxWidth: '100%',
     color: palette.textPrimary,
-    fontWeight: "900",
-    flexShrink: 1
+    fontWeight: '900',
+    flexShrink: 1,
   },
   cardFace__questionCompact: {
-    maxWidth: "100%"
+    maxWidth: '100%',
   },
   cardFace__footer: {
     gap: 10,
-    paddingTop: 14
+    paddingTop: 14,
   },
   cardFace__footerCompact: {
     gap: 8,
-    paddingTop: 10
+    paddingTop: 10,
   },
   cardFace__footerHead: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
   },
   cardFace__footerTitle: {
     color: palette.textPrimary,
     fontSize: 13,
-    fontWeight: "800"
+    fontWeight: '800',
   },
   cardFace__footerTitleCompact: {
-    fontSize: 12
+    fontSize: 12,
   },
   cardFace__footerMeta: {
     color: palette.textMuted,
     fontSize: 11,
-    fontWeight: "700"
+    fontWeight: '700',
   },
   cardFace__footerTrack: {
     height: 9,
     borderRadius: 999,
-    overflow: "hidden",
-    backgroundColor: "rgba(10, 20, 37, 0.6)"
+    overflow: 'hidden',
+    backgroundColor: 'rgba(10, 20, 37, 0.6)',
   },
   cardFace__footerFill: {
-    height: "100%",
+    height: '100%',
     borderRadius: 999,
-    backgroundColor: "rgba(130, 245, 208, 0.22)"
+    backgroundColor: 'rgba(130, 245, 208, 0.22)',
   },
   cardFaceBack__detailsWrap: {
-    marginTop: "auto",
+    marginTop: 'auto',
     gap: 14,
-    paddingTop: 16
+    paddingTop: 16,
   },
   cardFaceBack__detailsHint: {
-    flexDirection: "row",
-    alignItems: "flex-start",
+    flexDirection: 'row',
+    alignItems: 'flex-start',
     gap: 8,
     padding: 14,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: "rgba(93, 118, 160, 0.18)",
-    backgroundColor: "rgba(255, 255, 255, 0.02)"
+    borderColor: 'rgba(93, 118, 160, 0.18)',
+    backgroundColor: 'rgba(255, 255, 255, 0.02)',
   },
   cardFaceBack__detailsHintText: {
     flex: 1,
     color: palette.textSecondary,
     fontSize: 13,
-    lineHeight: 19
+    lineHeight: 19,
   },
   cardFaceBack__actions: {
-    flexDirection: "row",
-    gap: 10
+    flexDirection: 'row',
+    gap: 10,
   },
   cardFaceBack__ghostButton: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: 14,
     borderRadius: 18,
     borderWidth: 1,
     borderColor: palette.border,
-    backgroundColor: palette.overlayPill
+    backgroundColor: palette.overlayPill,
   },
   cardFaceBack__ghostButtonText: {
     color: palette.textPrimary,
     fontSize: 15,
-    fontWeight: "800"
+    fontWeight: '800',
   },
   cardFaceBack__primaryButton: {
     flex: 1.15,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: 14,
     borderRadius: 18,
-    backgroundColor: palette.accentStrong
+    backgroundColor: palette.accentStrong,
   },
   cardFaceBack__primaryButtonText: {
     color: palette.background,
     fontSize: 15,
-    fontWeight: "900"
+    fontWeight: '900',
   },
   metaPill: {
     minWidth: 0,
@@ -587,28 +604,28 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderWidth: 1,
     borderColor: palette.border,
-    backgroundColor: palette.overlayPill
+    backgroundColor: palette.overlayPill,
   },
   metaPillCategory: {
-    flex: 1.35
+    flex: 1.35,
   },
   metaPillIndex: {
-    flex: 0.8
+    flex: 0.8,
   },
   metaPillDifficulty: {
-    flex: 1
+    flex: 1,
   },
   metaPillCompact: {
     paddingHorizontal: 10,
-    paddingVertical: 7
+    paddingVertical: 7,
   },
   metaPill__text: {
     color: palette.textSecondary,
     fontSize: 11,
-    fontWeight: "700"
+    fontWeight: '700',
   },
   metaPill__textCompact: {
-    fontSize: 10
+    fontSize: 10,
   },
   surface: {
     marginTop: 10,
@@ -616,37 +633,37 @@ const styles = StyleSheet.create({
     padding: 14,
     gap: 8,
     borderWidth: 1,
-    borderColor: "rgba(96, 128, 168, 0.14)",
-    backgroundColor: palette.footerPanel
+    borderColor: 'rgba(96, 128, 168, 0.14)',
+    backgroundColor: palette.footerPanel,
   },
   surfaceAccent: {
     marginTop: 16,
-    backgroundColor: palette.answerPanel
+    backgroundColor: palette.answerPanel,
   },
   surfaceSubtle: {
-    backgroundColor: palette.subtlePanel
+    backgroundColor: palette.subtlePanel,
   },
   surface__head: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   surface__label: {
     color: palette.textMuted,
     fontSize: 11,
-    fontWeight: "800",
+    fontWeight: '800',
     letterSpacing: 1.2,
-    textTransform: "uppercase"
+    textTransform: 'uppercase',
   },
   surface__answer: {
     color: palette.textPrimary,
     fontSize: 20,
-    fontWeight: "900",
-    lineHeight: 26
+    fontWeight: '900',
+    lineHeight: 26,
   },
   surface__body: {
     color: palette.textSecondary,
     fontSize: 13,
-    lineHeight: 19
-  }
+    lineHeight: 19,
+  },
 });

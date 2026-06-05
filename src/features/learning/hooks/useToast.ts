@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from "react";
-import { Animated } from "react-native";
+import { useEffect, useRef, useState } from 'react';
+import { Animated } from 'react-native';
 
-export type FeedbackTone = "success" | "warning";
+export type FeedbackTone = 'success' | 'warning';
 
 export type ToastState = {
   body: string;
@@ -21,7 +21,7 @@ export function useToast() {
         clearTimeout(toastTimerRef.current);
       }
     },
-    []
+    [],
   );
 
   const showToast = (tone: FeedbackTone, title: string, body: string) => {
@@ -39,14 +39,14 @@ export function useToast() {
       Animated.timing(toastOpacity, {
         toValue: 1,
         duration: 180,
-        useNativeDriver: true
+        useNativeDriver: true,
       }),
       Animated.spring(toastTranslateY, {
         toValue: 0,
         bounciness: 8,
         speed: 16,
-        useNativeDriver: true
-      })
+        useNativeDriver: true,
+      }),
     ]).start();
 
     toastTimerRef.current = setTimeout(() => {
@@ -54,13 +54,13 @@ export function useToast() {
         Animated.timing(toastOpacity, {
           toValue: 0,
           duration: 180,
-          useNativeDriver: true
+          useNativeDriver: true,
         }),
         Animated.timing(toastTranslateY, {
           toValue: 12,
           duration: 180,
-          useNativeDriver: true
-        })
+          useNativeDriver: true,
+        }),
       ]).start(() => {
         setToastState(null);
       });
@@ -71,6 +71,6 @@ export function useToast() {
     showToast,
     toastOpacity,
     toastState,
-    toastTranslateY
+    toastTranslateY,
   };
 }

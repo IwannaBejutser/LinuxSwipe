@@ -1,10 +1,14 @@
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { CheckIcon, KeyboardIcon, ReviewIcon } from "../../../shared/components/icons/AppIcons";
-import { palette } from "../../../shared/theme/palette";
-import { FeedbackTone } from "../hooks/useToast";
-import { Card } from "../types/card";
-import { BottomSheetPanel } from "./BottomSheetPanel";
+import {
+  CheckIcon,
+  KeyboardIcon,
+  ReviewIcon,
+} from '../../../shared/components/icons/AppIcons';
+import { palette } from '../../../shared/theme/palette';
+import { FeedbackTone } from '../hooks/useToast';
+import { Card } from '../types/card';
+import { BottomSheetPanel } from './BottomSheetPanel';
 
 type ManualFeedback = {
   body: string;
@@ -31,7 +35,7 @@ export function ManualAnswerSheet({
   onClose,
   onSendToReview,
   onSubmit,
-  visible
+  visible,
 }: ManualAnswerSheetProps) {
   return (
     <BottomSheetPanel keyboardAware onClose={onClose} visible={visible}>
@@ -70,11 +74,13 @@ export function ManualAnswerSheet({
         <View
           style={[
             styles.feedback,
-            manualFeedback.tone === "success" ? styles.feedbackSuccess : styles.feedbackWarning
+            manualFeedback.tone === 'success'
+              ? styles.feedbackSuccess
+              : styles.feedbackWarning,
           ]}
         >
           <View style={styles.feedback__head}>
-            {manualFeedback.tone === "success" ? (
+            {manualFeedback.tone === 'success' ? (
               <CheckIcon color={palette.accentStrong} size={18} />
             ) : (
               <ReviewIcon color="#f4a261" size={18} />
@@ -86,7 +92,7 @@ export function ManualAnswerSheet({
       ) : null}
 
       <View style={styles.sheet__actions}>
-        {manualFeedback?.tone === "warning" ? (
+        {manualFeedback?.tone === 'warning' ? (
           <Pressable onPress={onSendToReview} style={styles.sheet__ghostButton}>
             <Text style={styles.sheet__ghostButtonText}>В повтор</Text>
           </Pressable>
@@ -98,7 +104,7 @@ export function ManualAnswerSheet({
 
         <Pressable onPress={onSubmit} style={styles.sheet__primaryButton}>
           <Text style={styles.sheet__primaryButtonText}>
-            {manualFeedback?.tone === "warning" ? "Проверить снова" : "Проверить"}
+            {manualFeedback?.tone === 'warning' ? 'Проверить снова' : 'Проверить'}
           </Text>
         </Pressable>
       </View>
@@ -108,31 +114,31 @@ export function ManualAnswerSheet({
 
 const styles = StyleSheet.create({
   sheet__head: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 12
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
   },
   sheet__titleIcon: {
     width: 38,
     height: 38,
     borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(130, 245, 208, 0.08)"
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(130, 245, 208, 0.08)',
   },
   sheet__titleCopy: {
     flex: 1,
-    gap: 6
+    gap: 6,
   },
   sheet__title: {
     color: palette.textPrimary,
     fontSize: 24,
-    fontWeight: "900"
+    fontWeight: '900',
   },
   sheet__subtitle: {
     color: palette.textSecondary,
     fontSize: 14,
-    lineHeight: 21
+    lineHeight: 21,
   },
   prompt__card: {
     padding: 16,
@@ -140,28 +146,28 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: palette.border,
     backgroundColor: palette.footerPanel,
-    gap: 8
+    gap: 8,
   },
   prompt__label: {
     color: palette.textMuted,
     fontSize: 11,
-    fontWeight: "800",
+    fontWeight: '800',
     letterSpacing: 1.1,
-    textTransform: "uppercase"
+    textTransform: 'uppercase',
   },
   prompt__text: {
     color: palette.textPrimary,
     fontSize: 19,
-    fontWeight: "800",
-    lineHeight: 25
+    fontWeight: '800',
+    lineHeight: 25,
   },
   input__block: {
-    gap: 8
+    gap: 8,
   },
   input__label: {
     color: palette.textPrimary,
     fontSize: 12,
-    fontWeight: "800"
+    fontWeight: '800',
   },
   input__field: {
     borderRadius: 18,
@@ -171,64 +177,64 @@ const styles = StyleSheet.create({
     color: palette.textPrimary,
     fontSize: 16,
     paddingHorizontal: 16,
-    paddingVertical: 14
+    paddingVertical: 14,
   },
   feedback: {
     padding: 14,
     borderRadius: 18,
-    gap: 8
+    gap: 8,
   },
   feedbackSuccess: {
-    backgroundColor: palette.successPanel
+    backgroundColor: palette.successPanel,
   },
   feedbackWarning: {
-    backgroundColor: palette.warningPanel
+    backgroundColor: palette.warningPanel,
   },
   feedback__head: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   feedback__title: {
     color: palette.textPrimary,
     fontSize: 15,
-    fontWeight: "800"
+    fontWeight: '800',
   },
   feedback__body: {
     color: palette.textSecondary,
     fontSize: 13,
-    lineHeight: 20
+    lineHeight: 20,
   },
   sheet__actions: {
-    flexDirection: "row",
-    gap: 12
+    flexDirection: 'row',
+    gap: 12,
   },
   sheet__ghostButton: {
     flex: 1,
     borderRadius: 18,
     paddingVertical: 15,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1,
     borderColor: palette.border,
-    backgroundColor: palette.overlayPill
+    backgroundColor: palette.overlayPill,
   },
   sheet__ghostButtonText: {
     color: palette.textPrimary,
     fontSize: 15,
-    fontWeight: "800"
+    fontWeight: '800',
   },
   sheet__primaryButton: {
     flex: 1.2,
     borderRadius: 18,
     paddingVertical: 15,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: palette.accentStrong
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: palette.accentStrong,
   },
   sheet__primaryButtonText: {
     color: palette.background,
     fontSize: 15,
-    fontWeight: "900"
-  }
+    fontWeight: '900',
+  },
 });

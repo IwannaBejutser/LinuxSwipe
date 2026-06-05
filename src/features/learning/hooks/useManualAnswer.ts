@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState } from 'react';
 
-import { evaluateManualAnswer } from "../lib/commandMatcher";
-import { Card } from "../types/card";
-import { FeedbackTone } from "./useToast";
+import { evaluateManualAnswer } from '../lib/commandMatcher';
+import { Card } from '../types/card';
+import { FeedbackTone } from './useToast';
 
 type ManualFeedback = {
   body: string;
@@ -12,8 +12,8 @@ type ManualFeedback = {
 
 type UseManualAnswerParams = {
   currentCard: Card | null;
-  markCardForReview: (cardId: string, source?: "swipe" | "manual") => Promise<void>;
-  markCardKnown: (cardId: string, source?: "swipe" | "manual") => Promise<void>;
+  markCardForReview: (cardId: string, source?: 'swipe' | 'manual') => Promise<void>;
+  markCardKnown: (cardId: string, source?: 'swipe' | 'manual') => Promise<void>;
   onClose: () => void;
   pulseCardFeedback: (tone: FeedbackTone) => void;
   showToast: (tone: FeedbackTone, title: string, body: string) => void;
@@ -25,13 +25,13 @@ export function useManualAnswer({
   markCardKnown,
   onClose,
   pulseCardFeedback,
-  showToast
+  showToast,
 }: UseManualAnswerParams) {
-  const [manualAnswer, setManualAnswer] = useState("");
+  const [manualAnswer, setManualAnswer] = useState('');
   const [manualFeedback, setManualFeedback] = useState<ManualFeedback>(null);
 
   const resetManualAnswer = () => {
-    setManualAnswer("");
+    setManualAnswer('');
     setManualFeedback(null);
   };
 
@@ -59,11 +59,15 @@ export function useManualAnswer({
       setManualFeedback({
         body: result.body,
         title: result.title,
-        tone: "success"
+        tone: 'success',
       });
-      pulseCardFeedback("success");
-      await markCardKnown(currentCard.id, "manual");
-      showToast("success", "+18 XP", "Отличный ручной ответ. Это лучший тип закрепления.");
+      pulseCardFeedback('success');
+      await markCardKnown(currentCard.id, 'manual');
+      showToast(
+        'success',
+        '+18 опыта',
+        'Отличный ручной ответ. Это лучший тип закрепления.',
+      );
       closeAnswerSheet();
       return;
     }
@@ -71,9 +75,9 @@ export function useManualAnswer({
     setManualFeedback({
       body: result.body,
       title: result.title,
-      tone: "warning"
+      tone: 'warning',
     });
-    pulseCardFeedback("warning");
+    pulseCardFeedback('warning');
   };
 
   const sendManualToReview = async () => {
@@ -81,9 +85,9 @@ export function useManualAnswer({
       return;
     }
 
-    pulseCardFeedback("warning");
-    await markCardForReview(currentCard.id, "manual");
-    showToast("warning", "+6 XP", "Карточка ушла в повтор и вернется раньше.");
+    pulseCardFeedback('warning');
+    await markCardForReview(currentCard.id, 'manual');
+    showToast('warning', '+6 опыта', 'Карточка ушла в повтор и вернется раньше.');
     closeAnswerSheet();
   };
 
@@ -94,6 +98,6 @@ export function useManualAnswer({
     resetManualAnswer,
     sendManualToReview,
     submitManualAnswer,
-    updateManualAnswer
+    updateManualAnswer,
   };
 }

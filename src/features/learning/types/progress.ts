@@ -1,4 +1,4 @@
-export type CardOutcome = "known" | "review";
+export type CardOutcome = 'known' | 'review';
 
 export type ReviewMeta = {
   count: number;
