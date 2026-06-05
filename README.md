@@ -1,22 +1,27 @@
 # LinuxSwipe
 
-LinuxSwipe — мобильное приложение для изучения Linux-команд в формате коротких карточек. Идея проекта: совместить быстрый ритм коротких свайп-карточек с учебной дисциплиной, знакомой по языковым тренажерам.
+LinuxSwipe — тренажер Linux-команд в формате коротких карточек. Пользователь видит практический сценарий, вспоминает команду, проверяет ответ и оценивает знание свайпом или ручным вводом.
 
-## Что уже реализовано
+Production: [https://linuxswipe.expo.app](https://linuxswipe.expo.app)
 
-Текущий MVP включает:
+## Что реализовано
 
-1. Экран карточек с вопросом по Linux-команде.
-2. Переворот карточки по тапу для показа ответа.
-3. Показ ответа, подсказки и примера использования на обратной стороне.
-4. Переход к следующей карточке через свайп с любой стороны карточки:
+Текущая версия включает:
+
+1. Учебную колоду на `100` карточек по Linux-командам.
+2. Переворот карточки по тапу для проверки ответа.
+3. Full-screen popup `Подробнее` с примером, подсказкой и допустимыми вариантами ответа.
+4. Свайпы вверх/вниз для оценки карточки:
    - `Знаю`
-   - `Повторить позже`
-5. Индикатор прогресса по колоде.
-6. Экран статистики.
-7. Сохранение локального прогресса через `AsyncStorage`.
+   - `На повтор`
+5. Ручной ввод команды с умной проверкой пробелов, кавычек, `sudo` и допустимых вариантов.
+6. Фильтры по теме, сложности и режиму колоды.
+7. Очередь повторения и smart-repeat подмешивание карточек в поток.
+8. XP, level, streak, дневную цель и статистику ручных ответов.
+9. Локальное сохранение прогресса через `AsyncStorage`.
+10. Dark UI с анимированным фоном и кастомными SVG-иконками.
 
-Авторизация и сервер для MVP не используются.
+Авторизация и сервер пока не используются.
 
 ## Целевая аудитория
 
@@ -33,6 +38,8 @@ LinuxSwipe — мобильное приложение для изучения L
 - TypeScript
 - React Navigation
 - AsyncStorage
+- EAS Hosting
+- react-native-svg
 
 ## Структура проекта
 
@@ -40,23 +47,31 @@ LinuxSwipe — мобильное приложение для изучения L
 LinuxSwipe/
   App.tsx
   app.json
+  assets/
+    branding/
+    icons/
+  public/
+    favicon.ico
   package.json
+  eas.json
   src/
-    constants/
-      cards.ts
-    context/
-      LearningContext.tsx
-    screens/
-      HomeScreen.tsx
-      StatsScreen.tsx
-    storage/
-      learningStorage.ts
-    theme/
-      palette.ts
-    types/
-      card.ts
-      progress.ts
+    features/
+      learning/
+        components/
+        context/
+        data/
+        screens/
+        storage/
+        types/
+        index.ts
+    shared/
+      components/
+        AnimatedBackdrop.tsx
+        icons/
+      theme/
 ```
+
+Архитектура сейчас ближе к feature-based подходу: все, что относится к обучению, лежит в `src/features/learning`, а переиспользуемые элементы находятся в `src/shared`.
 
 ## Модель карточки
 
@@ -67,25 +82,32 @@ LinuxSwipe/
   question: string;
   hint: string;
   answer: string;
+  acceptedAnswers?: string[];
   example: string;
   category: string;
   difficulty: "easy" | "medium" | "hard";
 }
 ```
 
-## Стартовая коллекция карточек
+## Коллекция карточек
 
-В проект уже добавлены 31 карточка по темам:
+В проект добавлены `100` карточек по темам:
 
+- Archives
+- Automation
 - File Management
+- Networking
 - Navigation
-- Search
+- Package Management
 - Permissions
 - Processes
-- Networking
-- System Monitoring
+- Search
 - Services
-- Package Management
+- Shell
+- System Info
+- System Monitoring
+- Text Processing
+- Users
 
 ## Как запустить
 
@@ -115,9 +137,27 @@ npm run web
 npm run typecheck
 ```
 
+## Web deploy
+
+Проект выкатывается на EAS Hosting.
+
+Локальная web-сборка:
+
+```bash
+npx expo export --platform web --output-dir dist-prod
+```
+
+Production deploy:
+
+```bash
+npx eas-cli@latest deploy --prod --export-dir dist-prod
+```
+
+`dist-prod/` — сборочный артефакт. Он не должен храниться в Git.
+
 ## Текущий статус
 
-Stage: MVP in progress
+Stage: active product prototype
 
 Готово:
 
@@ -128,12 +168,16 @@ Stage: MVP in progress
 - свайпы вверх/вниз для оценки знания
 - фильтрация по категориям и сложности
 - локальное сохранение прогресса
-- расширенный набор Linux-команд
+- ручной ввод ответа
+- подробное объяснение карточки в popup
+- XP, streak, level и дневная цель
+- расширенная колода Linux-команд
+- production deploy через EAS Hosting
 
 ## Следующие шаги
 
-1. Реализовать режим повторения только для карточек `Повторить позже`.
-2. Добавить streak, XP и интервальные повторения.
-3. Разделить карточки на учебные наборы и подборки для собеседований.
-4. Добавить поиск по командам и тегам.
-5. Подумать над озвучкой, mini-quiz и режимом "введи команду руками".
+1. Добавить прогресс по темам.
+2. Разделить режимы `Новые`, `На повторе`, `Освоенные`.
+3. Улучшить проверку ручного ответа до объяснения конкретной ошибки.
+4. Подготовить будущую схему БД для хранения карточек.
+5. Добавить подборки: `DevOps`, `Interview`, `Networking`, `Permissions`.
