@@ -1,916 +1,1586 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
-  Animated,
-  PanResponder,
-  Pressable,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View
-} from "react-native";
+	ActivityIndicator,
+	Animated,
+	Modal,
+	PanResponder,
+	Pressable,
+	SafeAreaView,
+	ScrollView,
+	StyleSheet,
+	Text,
+	TextInput,
+	useWindowDimensions,
+	View,
+} from 'react-native';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 
-import { useLearning } from "../context/LearningContext";
-import { Card } from "../types/card";
-import { palette } from "../theme/palette";
+import { ActionDock } from '../components/learn/ActionDock';
+import { BottomSheetPanel } from '../components/learn/BottomSheetPanel';
+import { LearnHeader } from '../components/learn/LearnHeader';
+import { LearningCard } from '../components/learn/LearningCard';
+import { SessionStrip } from '../components/learn/SessionStrip';
+import {
+	BoltIcon,
+	CheckIcon,
+	FilterIcon,
+	KeyboardIcon,
+	ReviewIcon,
+} from '../components/AppIcon';
+import { useLearning } from '../context/LearningContext';
+import { palette } from '../theme/palette';
+import { Card } from '../types/card';
 
-const ALL_CATEGORIES_LABEL = "Все темы";
+const ALL_CATEGORIES_LABEL = 'Все темы';
 const difficultyOptions = [
-  { key: "all", label: "Все уровни" },
-  { key: "easy", label: "Easy" },
-  { key: "medium", label: "Medium" },
-  { key: "hard", label: "Hard" }
+	{ key: 'all', label: 'Все уровни' },
+	{ key: 'easy', label: 'Легко' },
+	{ key: 'medium', label: 'Средне' },
+	{ key: 'hard', label: 'Сложно' },
+] as const;
+const deckModeOptions = [
+	{ key: 'all', label: 'Вся колода' },
+	{ key: 'review', label: 'На повторе' },
 ] as const;
 
+type DeckMode = (typeof deckModeOptions)[number]['key'];
+type ManualFeedbackTone = 'success' | 'warning';
+type ManualFeedback = {
+	body: string;
+	title: string;
+	tone: ManualFeedbackTone;
+} | null;
+type ToastState = {
+	body: string;
+	title: string;
+	tone: ManualFeedbackTone;
+} | null;
+
+function normalizeCommand(value: string) {
+	return value
+		.trim()
+		.replace(/[“”]/g, '"')
+		.replace(/[‘’]/g, "'")
+		.replace(/\s*\|\s*/g, ' | ')
+		.replace(/\s+/g, ' ')
+		.toLowerCase();
+}
+
+function stripLeadingSudo(value: string) {
+	return value.replace(/^sudo\s+/i, '');
+}
+
+function withSingleQuotes(value: string) {
+	return value.replace(/"([^"]+)"/g, "'$1'");
+}
+
+function withoutSimpleQuotes(value: string) {
+	return value.replace(/(["'])([^"'`\s]+)\1/g, '$2');
+}
+
+function buildAcceptedCommands(card: Card) {
+	const variants = new Set<string>();
+	const seedAnswers = [card.answer, ...(card.acceptedAnswers ?? [])];
+
+	seedAnswers.forEach((answer) => {
+		const localVariants = [
+			answer,
+			withSingleQuotes(answer),
+			withoutSimpleQuotes(answer),
+			withSingleQuotes(withoutSimpleQuotes(answer)),
+		];
+
+		localVariants.forEach((variant) => {
+			const normalizedVariant = normalizeCommand(variant);
+
+			if (!normalizedVariant) {
+				return;
+			}
+
+			variants.add(normalizedVariant);
+
+			if (/^sudo\s+/i.test(variant)) {
+				variants.add(normalizeCommand(stripLeadingSudo(variant)));
+			}
+		});
+	});
+
+	return variants;
+}
+
+function evaluateManualAnswer(card: Card, value: string) {
+	const normalizedValue = normalizeCommand(value);
+	const normalizedAnswer = normalizeCommand(card.answer);
+
+	if (!normalizedValue) {
+		return {
+			body: 'Введите ответ целиком, как если бы вы печатали его в терминале.',
+			correct: false,
+			title: 'Нужна команда',
+		};
+	}
+
+	if (buildAcceptedCommands(card).has(normalizedValue)) {
+		return {
+			body: 'Хорошо. Такой ответ можно честно засчитать в уверенное знание.',
+			correct: true,
+			title: 'Верно',
+		};
+	}
+
+	const inputTokens = normalizedValue.split(' ');
+	const answerTokens = normalizedAnswer.split(' ');
+	const sharedTokens = inputTokens.filter((token) =>
+		answerTokens.includes(token),
+	).length;
+	const isCloseMatch =
+		sharedTokens >= Math.max(answerTokens.length - 1, 1) ||
+		normalizeCommand(stripLeadingSudo(card.answer)) === normalizedValue;
+
+	if (isCloseMatch) {
+		return {
+			body: 'Основа верная. Проверьте один флаг, кавычки или последний аргумент.',
+			correct: false,
+			title: 'Почти получилось',
+		};
+	}
+
+	return {
+		body: 'Попробуйте еще раз, переверните карточку или отправьте ее на повтор.',
+		correct: false,
+		title: 'Пока мимо',
+	};
+}
+
+function interleaveDeck(primaryCards: Card[], reviewCards: Card[], every = 3) {
+	const deck: Card[] = [];
+	let primaryIndex = 0;
+	let reviewIndex = 0;
+
+	while (
+		primaryIndex < primaryCards.length ||
+		reviewIndex < reviewCards.length
+	) {
+		for (
+			let count = 0;
+			count < every && primaryIndex < primaryCards.length;
+			count += 1
+		) {
+			deck.push(primaryCards[primaryIndex]);
+			primaryIndex += 1;
+		}
+
+		if (reviewIndex < reviewCards.length) {
+			deck.push(reviewCards[reviewIndex]);
+			reviewIndex += 1;
+		}
+
+		if (
+			primaryIndex >= primaryCards.length &&
+			reviewIndex < reviewCards.length
+		) {
+			deck.push(...reviewCards.slice(reviewIndex));
+			break;
+		}
+	}
+
+	return deck;
+}
+
 export function HomeScreen() {
-  const {
-    cards,
-    isHydrated,
-    markCardForReview,
-    markCardKnown,
-    progress,
-    restart,
-    stats
-  } = useLearning();
-  const [selectedCategory, setSelectedCategory] = useState(ALL_CATEGORIES_LABEL);
-  const [selectedDifficulty, setSelectedDifficulty] =
-    useState<(typeof difficultyOptions)[number]["key"]>("all");
-  const [showHint, setShowHint] = useState(false);
-  const [showAnswer, setShowAnswer] = useState(false);
-  const swipeOffset = useRef(new Animated.Value(0)).current;
-  const showAnswerRef = useRef(false);
-  const currentCardRef = useRef<Card | null>(null);
-  const isCompletingSwipeRef = useRef(false);
-  const swipeThreshold = 82;
-  const exitDistance = 540;
+	const {
+		cards,
+		isHydrated,
+		markCardForReview,
+		markCardKnown,
+		progress,
+		restart,
+		reviewMeta,
+		stats,
+	} = useLearning();
+	const tabBarHeight = useBottomTabBarHeight();
+	const { width } = useWindowDimensions();
+	const frameMaxWidth = width >= 768 ? 720 : undefined;
+	const [selectedCategory, setSelectedCategory] =
+		useState(ALL_CATEGORIES_LABEL);
+	const [selectedDifficulty, setSelectedDifficulty] =
+		useState<(typeof difficultyOptions)[number]['key']>('all');
+	const [deckMode, setDeckMode] = useState<DeckMode>('all');
+	const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+	const [isAnswerSheetOpen, setIsAnswerSheetOpen] = useState(false);
+	const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+	const [isCardFlipped, setIsCardFlipped] = useState(false);
+	const [manualAnswer, setManualAnswer] = useState('');
+	const [manualFeedback, setManualFeedback] = useState<ManualFeedback>(null);
+	const [toastState, setToastState] = useState<ToastState>(null);
+	const flipProgress = useRef(new Animated.Value(0)).current;
+	const swipeOffset = useRef(new Animated.Value(0)).current;
+	const toastOpacity = useRef(new Animated.Value(0)).current;
+	const toastTranslateY = useRef(new Animated.Value(18)).current;
+	const successGlow = useRef(new Animated.Value(0)).current;
+	const warningGlow = useRef(new Animated.Value(0)).current;
+	const isCardFlippedRef = useRef(false);
+	const currentCardRef = useRef<Card | null>(null);
+	const isCompletingSwipeRef = useRef(false);
+	const toastTimerRef = useRef<null | ReturnType<typeof setTimeout>>(null);
+	const swipeThreshold = 82;
+	const exitDistance = 540;
 
-  const categories = useMemo(
-    () => [ALL_CATEGORIES_LABEL, ...new Set(cards.map((card) => card.category))],
-    [cards]
-  );
+	const categories = useMemo(
+		() => [
+			ALL_CATEGORIES_LABEL,
+			...new Set(cards.map((card) => card.category)),
+		],
+		[cards],
+	);
 
-  const filteredCards = useMemo(
-    () =>
-      cards.filter((card) => {
-        const categoryMatches =
-          selectedCategory === ALL_CATEGORIES_LABEL || card.category === selectedCategory;
-        const difficultyMatches =
-          selectedDifficulty === "all" || card.difficulty === selectedDifficulty;
+	const filteredCards = useMemo(
+		() =>
+			cards.filter((card) => {
+				const categoryMatches =
+					selectedCategory === ALL_CATEGORIES_LABEL ||
+					card.category === selectedCategory;
+				const difficultyMatches =
+					selectedDifficulty === 'all' ||
+					card.difficulty === selectedDifficulty;
+				const deckModeMatches =
+					deckMode === 'all' ? true : progress[card.id] === 'review';
 
-        return categoryMatches && difficultyMatches;
-      }),
-    [cards, selectedCategory, selectedDifficulty]
-  );
+				return categoryMatches && difficultyMatches && deckModeMatches;
+			}),
+		[cards, deckMode, progress, selectedCategory, selectedDifficulty],
+	);
 
-  const remainingCards = useMemo(
-    () => filteredCards.filter((card) => !(card.id in progress)),
-    [filteredCards, progress]
-  );
+	const remainingCards = useMemo(() => {
+		const reviewCards = [
+			...filteredCards.filter((card) => progress[card.id] === 'review'),
+		].sort((left, right) => {
+			const reviewDiff =
+				(reviewMeta[right.id]?.count ?? 0) - (reviewMeta[left.id]?.count ?? 0);
 
-  const currentCard = remainingCards[0] ?? null;
-  const nextCard = remainingCards[1] ?? null;
-  const completedInFeed = filteredCards.length - remainingCards.length;
-  const cardPosition = currentCard
-    ? Math.min(completedInFeed + 1, filteredCards.length)
-    : filteredCards.length;
+			if (reviewDiff !== 0) {
+				return reviewDiff;
+			}
 
-  useEffect(() => {
-    showAnswerRef.current = showAnswer;
-  }, [showAnswer]);
+			return (
+				cards.findIndex((card) => card.id === left.id) -
+				cards.findIndex((card) => card.id === right.id)
+			);
+		});
 
-  useEffect(() => {
-    currentCardRef.current = currentCard;
-  }, [currentCard]);
+		if (deckMode === 'review') {
+			return reviewCards;
+		}
 
-  useEffect(() => {
-    setShowHint(false);
-    setShowAnswer(false);
-    swipeOffset.setValue(0);
-  }, [currentCard?.id, swipeOffset]);
+		const newCards = filteredCards.filter((card) => !(card.id in progress));
+		return interleaveDeck(newCards, reviewCards, 3);
+	}, [cards, deckMode, filteredCards, progress, reviewMeta]);
 
-  const resetCardPosition = () => {
-    Animated.spring(swipeOffset, {
-      toValue: 0,
-      useNativeDriver: true,
-      bounciness: 8,
-      speed: 13
-    }).start();
-  };
+	const currentCard = remainingCards[0] ?? null;
+	const nextCard = remainingCards[1] ?? null;
+	const completedInFeed =
+		deckMode === 'review'
+			? filteredCards.length - remainingCards.length
+			: filteredCards.filter((card) => progress[card.id] === 'known').length;
+	const progressRatio =
+		filteredCards.length === 0
+			? 0
+			: completedInFeed / Math.max(filteredCards.length, 1);
+	const reviewCount = Object.values(progress).filter(
+		(value) => value === 'review',
+	).length;
+	const activeFiltersCount =
+		(selectedCategory === ALL_CATEGORIES_LABEL ? 0 : 1) +
+		(selectedDifficulty === 'all' ? 0 : 1);
+	const sessionIndex = Math.min(
+		completedInFeed + 1,
+		Math.max(filteredCards.length, 1),
+	);
+	const deckLabel =
+		deckMode === 'review' ? 'Очередь повторения' : 'Основная колода';
 
-  const completeSwipe = (card: Card, direction: "up" | "down") => {
-    if (isCompletingSwipeRef.current) {
-      return;
-    }
+	useEffect(() => {
+		isCardFlippedRef.current = isCardFlipped;
+	}, [isCardFlipped]);
 
-    isCompletingSwipeRef.current = true;
+	useEffect(() => {
+		currentCardRef.current = currentCard;
+	}, [currentCard]);
 
-    Animated.timing(swipeOffset, {
-      toValue: direction === "up" ? -exitDistance : exitDistance,
-      duration: 220,
-      useNativeDriver: true
-    }).start(() => {
-      const action =
-        direction === "up" ? markCardKnown(card.id) : markCardForReview(card.id);
+	useEffect(() => {
+		setIsCardFlipped(false);
+		isCardFlippedRef.current = false;
+		flipProgress.setValue(0);
+		swipeOffset.setValue(0);
+		setManualAnswer('');
+		setManualFeedback(null);
+		setIsAnswerSheetOpen(false);
+		setIsDetailsOpen(false);
+	}, [currentCard?.id, flipProgress, swipeOffset]);
 
-      void action.finally(() => {
-        swipeOffset.setValue(0);
-        isCompletingSwipeRef.current = false;
-      });
-    });
-  };
+	useEffect(
+		() => () => {
+			if (toastTimerRef.current) {
+				clearTimeout(toastTimerRef.current);
+			}
+		},
+		[],
+	);
 
-  const panResponder = useMemo(
-    () =>
-      PanResponder.create({
-        onMoveShouldSetPanResponder: (_, gestureState) =>
-          showAnswerRef.current &&
-          !isCompletingSwipeRef.current &&
-          Math.abs(gestureState.dy) > 8 &&
-          Math.abs(gestureState.dy) > Math.abs(gestureState.dx),
-        onMoveShouldSetPanResponderCapture: (_, gestureState) =>
-          showAnswerRef.current &&
-          !isCompletingSwipeRef.current &&
-          Math.abs(gestureState.dy) > 8 &&
-          Math.abs(gestureState.dy) > Math.abs(gestureState.dx),
-        onPanResponderGrant: () => {
-          swipeOffset.stopAnimation();
-        },
-        onPanResponderMove: (_, gestureState) => {
-          const nextValue = Math.max(Math.min(gestureState.dy, 180), -180);
-          swipeOffset.setValue(nextValue);
-        },
-        onPanResponderRelease: (_, gestureState) => {
-          const liveCard = currentCardRef.current;
+	const pulseCardFeedback = (tone: ManualFeedbackTone) => {
+		const animatedValue = tone === 'success' ? successGlow : warningGlow;
+		animatedValue.stopAnimation();
+		animatedValue.setValue(0);
 
-          if (!liveCard) {
-            resetCardPosition();
-            return;
-          }
+		Animated.sequence([
+			Animated.timing(animatedValue, {
+				toValue: 1,
+				duration: 140,
+				useNativeDriver: true,
+			}),
+			Animated.timing(animatedValue, {
+				toValue: 0,
+				duration: 420,
+				useNativeDriver: true,
+			}),
+		]).start();
+	};
 
-          if (gestureState.dy <= -swipeThreshold) {
-            completeSwipe(liveCard, "up");
-            return;
-          }
+	const showToast = (tone: ManualFeedbackTone, title: string, body: string) => {
+		if (toastTimerRef.current) {
+			clearTimeout(toastTimerRef.current);
+		}
 
-          if (gestureState.dy >= swipeThreshold) {
-            completeSwipe(liveCard, "down");
-            return;
-          }
+		setToastState({ body, title, tone });
+		toastOpacity.stopAnimation();
+		toastTranslateY.stopAnimation();
+		toastOpacity.setValue(0);
+		toastTranslateY.setValue(18);
 
-          resetCardPosition();
-        },
-        onPanResponderTerminate: resetCardPosition,
-        onPanResponderTerminationRequest: () => false
-      }),
-    [swipeOffset]
-  );
+		Animated.parallel([
+			Animated.timing(toastOpacity, {
+				toValue: 1,
+				duration: 180,
+				useNativeDriver: true,
+			}),
+			Animated.spring(toastTranslateY, {
+				toValue: 0,
+				bounciness: 8,
+				speed: 16,
+				useNativeDriver: true,
+			}),
+		]).start();
 
-  const swipeUpOpacity = swipeOffset.interpolate({
-    inputRange: [-180, -54, 0],
-    outputRange: [0.95, 0.25, 0],
-    extrapolate: "clamp"
-  });
-  const swipeDownOpacity = swipeOffset.interpolate({
-    inputRange: [0, 54, 180],
-    outputRange: [0, 0.25, 0.95],
-    extrapolate: "clamp"
-  });
-  const cardRotation = swipeOffset.interpolate({
-    inputRange: [-180, 0, 180],
-    outputRange: ["-4deg", "0deg", "4deg"]
-  });
-  const cardScale = swipeOffset.interpolate({
-    inputRange: [-180, 0, 180],
-    outputRange: [0.985, 1, 0.985]
-  });
+		toastTimerRef.current = setTimeout(() => {
+			Animated.parallel([
+				Animated.timing(toastOpacity, {
+					toValue: 0,
+					duration: 180,
+					useNativeDriver: true,
+				}),
+				Animated.timing(toastTranslateY, {
+					toValue: 12,
+					duration: 180,
+					useNativeDriver: true,
+				}),
+			]).start(() => {
+				setToastState(null);
+			});
+		}, 1750);
+	};
 
-  const clearFilters = () => {
-    setSelectedCategory(ALL_CATEGORIES_LABEL);
-    setSelectedDifficulty("all");
-  };
+	const resetCardPosition = () => {
+		Animated.spring(swipeOffset, {
+			toValue: 0,
+			useNativeDriver: true,
+			bounciness: 8,
+			speed: 13,
+		}).start();
+	};
 
-  if (!isHydrated) {
-    return (
-      <SafeAreaView style={styles.screen}>
-        <BackgroundDecor />
-        <View style={styles.loader}>
-          <ActivityIndicator color={palette.accentStrong} size="large" />
-          <Text style={styles.loaderText}>Поднимаем ленту карточек...</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
+	const completeSwipe = (card: Card, direction: 'up' | 'down') => {
+		if (isCompletingSwipeRef.current) {
+			return;
+		}
 
-  if (filteredCards.length === 0) {
-    return (
-      <SafeAreaView style={styles.screen}>
-        <BackgroundDecor />
-        <View style={styles.emptyShell}>
-          <Text style={styles.emptyEyebrow}>Фильтры</Text>
-          <Text style={styles.emptyTitle}>Под этот набор фильтров карточек пока нет</Text>
-          <Text style={styles.emptyText}>
-            Попробуйте другую тему или верните все уровни сложности.
-          </Text>
-          <Pressable onPress={clearFilters} style={styles.primaryAction}>
-            <Text style={styles.primaryActionText}>Сбросить фильтры</Text>
-          </Pressable>
-        </View>
-      </SafeAreaView>
-    );
-  }
+		isCompletingSwipeRef.current = true;
+		pulseCardFeedback(direction === 'up' ? 'success' : 'warning');
 
-  if (!currentCard) {
-    return (
-      <SafeAreaView style={styles.screen}>
-        <BackgroundDecor />
-        <View style={styles.emptyShell}>
-          <Text style={styles.emptyEyebrow}>Лента завершена</Text>
-          <Text style={styles.emptyTitle}>В этой подборке все карточки уже отмечены</Text>
-          <Text style={styles.emptyText}>
-            Можно сменить фильтры или начать колоду заново и пройти команды еще раз.
-          </Text>
+		Animated.timing(swipeOffset, {
+			toValue: direction === 'up' ? -exitDistance : exitDistance,
+			duration: 220,
+			useNativeDriver: true,
+		}).start(() => {
+			const action =
+				direction === 'up'
+					? markCardKnown(card.id)
+					: markCardForReview(card.id);
 
-          <View style={styles.finishStats}>
-            <View style={styles.finishStatCard}>
-              <Text style={styles.finishStatValue}>{stats.known}</Text>
-              <Text style={styles.finishStatLabel}>Знаю</Text>
-            </View>
-            <View style={styles.finishStatCard}>
-              <Text style={styles.finishStatValue}>{stats.review}</Text>
-              <Text style={styles.finishStatLabel}>Повторить</Text>
-            </View>
-          </View>
+			void action.finally(() => {
+				showToast(
+					direction === 'up' ? 'success' : 'warning',
+					direction === 'up' ? '+10 XP' : 'Добавлено на повтор',
+					direction === 'up'
+						? 'Карточка ушла в уверенно знакомые.'
+						: 'Команда вернется в поток раньше остальных.',
+				);
+				swipeOffset.setValue(0);
+				isCompletingSwipeRef.current = false;
+			});
+		});
+	};
 
-          <Pressable onPress={clearFilters} style={styles.secondaryAction}>
-            <Text style={styles.secondaryActionText}>Показать все карточки</Text>
-          </Pressable>
-          <Pressable onPress={() => void restart()} style={styles.primaryAction}>
-            <Text style={styles.primaryActionText}>Пройти заново</Text>
-          </Pressable>
-        </View>
-      </SafeAreaView>
-    );
-  }
+	const setCardFace = (nextFlipped: boolean) => {
+		if (isCompletingSwipeRef.current) {
+			return;
+		}
 
-  return (
-    <SafeAreaView style={styles.screen}>
-      <BackgroundDecor />
+		isCardFlippedRef.current = nextFlipped;
+		setIsCardFlipped(nextFlipped);
 
-      <View style={styles.chrome}>
-        <View style={styles.chromeTopRow}>
-          <View>
-            <Text style={styles.brand}>LinuxSwipe</Text>
-            <Text style={styles.feedTitle}>Лента команд</Text>
-          </View>
+		Animated.spring(flipProgress, {
+			toValue: nextFlipped ? 1 : 0,
+			useNativeDriver: true,
+			bounciness: 7,
+			speed: 14,
+		}).start();
+	};
 
-          <View style={styles.progressPill}>
-            <Text style={styles.progressPillText}>
-              {cardPosition}/{filteredCards.length}
-            </Text>
-          </View>
-        </View>
+	const submitManualAnswer = async () => {
+		if (!currentCard) {
+			return;
+		}
 
-        <FilterRail
-          onSelect={setSelectedCategory}
-          options={categories}
-          selectedValue={selectedCategory}
-        />
-        <FilterRail
-          onSelect={(value) =>
-            setSelectedDifficulty(value as (typeof difficultyOptions)[number]["key"])
-          }
-          options={difficultyOptions.map((option) => option.label)}
-          optionKeys={difficultyOptions.map((option) => option.key)}
-          selectedValue={selectedDifficulty}
-        />
-      </View>
+		const result = evaluateManualAnswer(currentCard, manualAnswer);
 
-      <View style={styles.feedStage}>
-        {nextCard ? (
-          <View style={styles.backCard}>
-            <View style={styles.backCardGlow} />
-            <Text style={styles.backCardLabel}>Следующая</Text>
-            <Text style={styles.backCardCommand}>{nextCard.command}</Text>
-            <Text numberOfLines={2} style={styles.backCardQuestion}>
-              {nextCard.question}
-            </Text>
-          </View>
-        ) : null}
+		if (result.correct) {
+			setManualFeedback({
+				body: result.body,
+				title: result.title,
+				tone: 'success',
+			});
+			pulseCardFeedback('success');
+			await markCardKnown(currentCard.id, 'manual');
+			showToast(
+				'success',
+				'+18 XP',
+				'Отличный ручной ответ. Это лучший тип закрепления.',
+			);
+			closeAnswerSheet();
+			return;
+		}
 
-        <Animated.View
-          {...panResponder.panHandlers}
-          style={[
-            styles.frontCard,
-            {
-              transform: [
-                { translateY: swipeOffset },
-                { rotate: cardRotation },
-                { scale: cardScale }
-              ]
-            }
-          ]}
-        >
-          <Animated.View
-            pointerEvents="none"
-            style={[styles.swipeOverlay, styles.knowOverlay, { opacity: swipeUpOpacity }]}
-          >
-            <Text style={styles.swipeOverlayTitle}>ЗНАЮ</Text>
-            <Text style={styles.swipeOverlaySubtitle}>Свайп вверх</Text>
-          </Animated.View>
+		setManualFeedback({
+			body: result.body,
+			title: result.title,
+			tone: 'warning',
+		});
+		pulseCardFeedback('warning');
+	};
 
-          <Animated.View
-            pointerEvents="none"
-            style={[
-              styles.swipeOverlay,
-              styles.reviewOverlay,
-              { opacity: swipeDownOpacity }
-            ]}
-          >
-            <Text style={styles.swipeOverlayTitle}>ПОВТОРИТЬ</Text>
-            <Text style={styles.swipeOverlaySubtitle}>Свайп вниз</Text>
-          </Animated.View>
+	const closeAnswerSheet = () => {
+		setIsAnswerSheetOpen(false);
+		setManualAnswer('');
+		setManualFeedback(null);
+	};
 
-          <View style={styles.cardHeader}>
-            <View style={styles.commandChip}>
-              <Text style={styles.commandChipText}>{currentCard.command}</Text>
-            </View>
-            <Text style={styles.cardMeta}>
-              {currentCard.category} · {currentCard.difficulty}
-            </Text>
-          </View>
+	const sendManualToReview = async () => {
+		if (!currentCard) {
+			return;
+		}
 
-          <View style={styles.questionBlock}>
-            <Text style={styles.questionEyebrow}>Вопрос</Text>
-            <Text style={styles.question}>{currentCard.question}</Text>
-          </View>
+		pulseCardFeedback('warning');
+		await markCardForReview(currentCard.id, 'manual');
+		showToast('warning', '+6 XP', 'Карточка ушла в повтор и вернется раньше.');
+		closeAnswerSheet();
+	};
 
-          {showHint ? (
-            <View style={styles.hintCard}>
-              <Text style={styles.surfaceLabel}>Подсказка</Text>
-              <Text style={styles.hintText}>{currentCard.hint}</Text>
-            </View>
-          ) : (
-            <View style={styles.shortHelp}>
-              <Text style={styles.shortHelpText}>
-                Сначала откройте ответ, затем свайпните карточку вверх или вниз.
-              </Text>
-            </View>
-          )}
+	const clearFilters = () => {
+		setSelectedCategory(ALL_CATEGORIES_LABEL);
+		setSelectedDifficulty('all');
+		setDeckMode('all');
+		setIsFiltersOpen(false);
+	};
 
-          <View style={styles.bottomSurface}>
-            {!showAnswer ? (
-              <>
-                <View style={styles.ctaRow}>
-                  <Pressable
-                    onPress={() => setShowHint((value) => !value)}
-                    style={styles.ghostButton}
-                  >
-                    <Text style={styles.ghostButtonText}>
-                      {showHint ? "Скрыть подсказку" : "Подсказка"}
-                    </Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={() => setShowAnswer(true)}
-                    style={styles.primaryButton}
-                  >
-                    <Text style={styles.primaryButtonText}>Показать ответ</Text>
-                  </Pressable>
-                </View>
+	const panResponder = useMemo(
+		() =>
+			PanResponder.create({
+				onMoveShouldSetPanResponder: (_, gestureState) =>
+					!isCompletingSwipeRef.current &&
+					Math.abs(gestureState.dy) > 8 &&
+					Math.abs(gestureState.dy) > Math.abs(gestureState.dx),
+				onMoveShouldSetPanResponderCapture: (_, gestureState) =>
+					!isCompletingSwipeRef.current &&
+					Math.abs(gestureState.dy) > 8 &&
+					Math.abs(gestureState.dy) > Math.abs(gestureState.dx),
+				onPanResponderGrant: () => {
+					swipeOffset.stopAnimation();
+				},
+				onPanResponderMove: (_, gestureState) => {
+					const nextValue = Math.max(Math.min(gestureState.dy, 188), -188);
+					swipeOffset.setValue(nextValue);
+				},
+				onPanResponderRelease: (_, gestureState) => {
+					const liveCard = currentCardRef.current;
 
-                <View style={styles.feedStatsRow}>
-                  <StatPill label="Знаю" value={stats.known} />
-                  <StatPill label="Повторить" value={stats.review} />
-                  <StatPill label="Осталось" value={remainingCards.length} />
-                </View>
-              </>
-            ) : (
-              <>
-                <View style={styles.answerSurface}>
-                  <Text style={styles.surfaceLabel}>Правильная команда</Text>
-                  <Text style={styles.answer}>{currentCard.answer}</Text>
-                </View>
+					if (!liveCard) {
+						resetCardPosition();
+						return;
+					}
 
-                <View style={styles.swipeGuide}>
-                  <Text style={styles.swipeGuideText}>
-                    Свайп вверх — знаю, свайп вниз — повторить позже
-                  </Text>
-                </View>
+					if (gestureState.dy <= -swipeThreshold) {
+						completeSwipe(liveCard, 'up');
+						return;
+					}
 
-                <View style={styles.ctaRow}>
-                  <Pressable
-                    onPress={() => completeSwipe(currentCard, "down")}
-                    style={styles.ghostButton}
-                  >
-                    <Text style={styles.ghostButtonText}>Повторить позже</Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={() => completeSwipe(currentCard, "up")}
-                    style={styles.primaryButton}
-                  >
-                    <Text style={styles.primaryButtonText}>Знаю</Text>
-                  </Pressable>
-                </View>
-              </>
-            )}
-          </View>
-        </Animated.View>
-      </View>
-    </SafeAreaView>
-  );
+					if (gestureState.dy >= swipeThreshold) {
+						completeSwipe(liveCard, 'down');
+						return;
+					}
+
+					resetCardPosition();
+				},
+				onPanResponderTerminate: resetCardPosition,
+				onPanResponderTerminationRequest: () => false,
+			}),
+		[swipeOffset],
+	);
+
+	if (!isHydrated) {
+		return (
+			<SafeAreaView style={screenStyles.screen}>
+				<BackgroundDecor />
+				<View style={loaderStyles.loader}>
+					<ActivityIndicator color={palette.accentStrong} size="large" />
+					<Text style={loaderStyles.loader__text}>
+						Собираем вашу учебную сессию...
+					</Text>
+				</View>
+			</SafeAreaView>
+		);
+	}
+
+	if (filteredCards.length === 0) {
+		return (
+			<SafeAreaView style={screenStyles.screen}>
+				<BackgroundDecor />
+				<View style={emptyStyles.empty}>
+					<Text style={emptyStyles.empty__eyebrow}>
+						{deckMode === 'review' ? 'Режим повторения' : 'Фильтры'}
+					</Text>
+					<Text style={emptyStyles.empty__title}>
+						{deckMode === 'review'
+							? 'Сейчас в очереди повторения пусто'
+							: 'Под эти фильтры карточек пока нет'}
+					</Text>
+					<Text style={emptyStyles.empty__body}>
+						{deckMode === 'review'
+							? "Отмечайте команды как 'повторить', и здесь появится ваша персональная очередь."
+							: 'Смените тему, уровень сложности или вернитесь к полной колоде.'}
+					</Text>
+					<Pressable
+						onPress={clearFilters}
+						style={emptyStyles.empty__primaryAction}
+					>
+						<Text style={emptyStyles.empty__primaryActionText}>
+							Показать все карточки
+						</Text>
+					</Pressable>
+				</View>
+			</SafeAreaView>
+		);
+	}
+
+	if (!currentCard) {
+		return (
+			<SafeAreaView style={screenStyles.screen}>
+				<BackgroundDecor />
+				<View style={emptyStyles.empty}>
+					<Text style={emptyStyles.empty__eyebrow}>
+						{deckMode === 'review'
+							? 'Повторение завершено'
+							: 'Сессия завершена'}
+					</Text>
+					<Text style={emptyStyles.empty__title}>
+						{deckMode === 'review'
+							? 'Очередь на повтор сейчас закрыта'
+							: 'В этой подборке больше нет активных карточек'}
+					</Text>
+					<Text style={emptyStyles.empty__body}>
+						{deckMode === 'review'
+							? 'Хороший момент вернуться в общую колоду или пройти статистику и закрепить темп.'
+							: 'Можно сменить фильтры, открыть блок повторения или полностью начать заново.'}
+					</Text>
+
+					<View style={emptyStyles.empty__statsRow}>
+						<CompletionChip
+							icon={<CheckIcon color={palette.accentStrong} size={18} />}
+							label="Знаю"
+							tone="success"
+							value={stats.known}
+						/>
+						<CompletionChip
+							icon={<ReviewIcon color="#f4a261" size={18} />}
+							label="На повторе"
+							tone="warning"
+							value={stats.review}
+						/>
+					</View>
+
+					<Pressable
+						onPress={() => setDeckMode('review')}
+						style={emptyStyles.empty__secondaryAction}
+					>
+						<Text style={emptyStyles.empty__secondaryActionText}>
+							Открыть карточки на повторе
+						</Text>
+					</Pressable>
+					<Pressable
+						onPress={clearFilters}
+						style={emptyStyles.empty__secondaryAction}
+					>
+						<Text style={emptyStyles.empty__secondaryActionText}>
+							Сбросить режим и фильтры
+						</Text>
+					</Pressable>
+					<Pressable
+						onPress={() => void restart()}
+						style={emptyStyles.empty__primaryAction}
+					>
+						<Text style={emptyStyles.empty__primaryActionText}>
+							Начать всю колоду заново
+						</Text>
+					</Pressable>
+				</View>
+			</SafeAreaView>
+		);
+	}
+
+	return (
+		<SafeAreaView style={screenStyles.screen}>
+			<BackgroundDecor />
+
+			<View
+				style={[
+					screenStyles.screen__content,
+					{ paddingBottom: tabBarHeight + 24 },
+				]}
+			>
+				<View
+					style={[
+						screenStyles.screen__frame,
+						frameMaxWidth ? { maxWidth: frameMaxWidth } : null,
+					]}
+				>
+					<LearnHeader
+						activeFiltersCount={activeFiltersCount}
+						onOpenFilters={() => setIsFiltersOpen(true)}
+					/>
+
+					<SessionStrip
+						progressRatio={progressRatio}
+						remainingCount={remainingCards.length}
+						reviewCount={reviewCount}
+						streak={stats.streak}
+						xp={stats.xp}
+					/>
+
+					<LearningCard
+						currentCard={currentCard}
+						deckLabel={deckLabel}
+						flipProgress={flipProgress}
+						isCardFlipped={isCardFlipped}
+						nextCard={nextCard}
+						onOpenDetails={() => setIsDetailsOpen(true)}
+						onToggleFace={() => setCardFace(!isCardFlippedRef.current)}
+						panHandlers={panResponder.panHandlers}
+						sessionIndex={sessionIndex}
+						sessionTotal={filteredCards.length}
+						successGlow={successGlow}
+						swipeOffset={swipeOffset}
+						warningGlow={warningGlow}
+					/>
+
+					<ActionDock
+						onOpenManualAnswer={() => setIsAnswerSheetOpen(true)}
+						onSendKnown={() => completeSwipe(currentCard, 'up')}
+						onSendReview={() => completeSwipe(currentCard, 'down')}
+					/>
+
+					{toastState ? (
+						<Animated.View
+							pointerEvents="none"
+							style={[
+								toastStyles.toast,
+								toastState.tone === 'success'
+									? toastStyles.toastSuccess
+									: toastStyles.toastWarning,
+								{
+									opacity: toastOpacity,
+									transform: [{ translateY: toastTranslateY }],
+								},
+							]}
+						>
+							<View style={toastStyles.toast__iconWrap}>
+								{toastState.tone === 'success' ? (
+									<BoltIcon color={palette.accentStrong} size={18} />
+								) : (
+									<ReviewIcon color="#f4a261" size={18} />
+								)}
+							</View>
+							<View style={toastStyles.toast__copy}>
+								<Text style={toastStyles.toast__title}>{toastState.title}</Text>
+								<Text style={toastStyles.toast__body}>{toastState.body}</Text>
+							</View>
+						</Animated.View>
+					) : null}
+				</View>
+			</View>
+
+			<BottomSheetPanel
+				onClose={() => setIsFiltersOpen(false)}
+				visible={isFiltersOpen}
+			>
+				<View style={sheetStyles.sheet__head}>
+					<View style={sheetStyles.sheet__titleIcon}>
+						<FilterIcon color={palette.accentStrong} size={18} />
+					</View>
+					<View style={sheetStyles.sheet__titleCopy}>
+						<Text style={sheetStyles.sheet__title}>Фильтры сессии</Text>
+						<Text style={sheetStyles.sheet__subtitle}>
+							Настройте колоду, не перегружая главный экран и не отнимая высоту
+							у карточки.
+						</Text>
+					</View>
+				</View>
+
+				<View style={sheetStyles.sheet__section}>
+					<Text style={sheetStyles.sheet__sectionTitle}>Режим колоды</Text>
+					<FilterRail
+						onSelect={(value) => setDeckMode(value as DeckMode)}
+						optionKeys={deckModeOptions.map((option) => option.key)}
+						options={deckModeOptions.map((option) => option.label)}
+						selectedValue={deckMode}
+					/>
+				</View>
+
+				<View style={sheetStyles.sheet__section}>
+					<Text style={sheetStyles.sheet__sectionTitle}>Тема</Text>
+					<FilterRail
+						onSelect={setSelectedCategory}
+						options={categories}
+						selectedValue={selectedCategory}
+					/>
+				</View>
+
+				<View style={sheetStyles.sheet__section}>
+					<Text style={sheetStyles.sheet__sectionTitle}>Сложность</Text>
+					<FilterRail
+						onSelect={(value) =>
+							setSelectedDifficulty(
+								value as (typeof difficultyOptions)[number]['key'],
+							)
+						}
+						optionKeys={difficultyOptions.map((option) => option.key)}
+						options={difficultyOptions.map((option) => option.label)}
+						selectedValue={selectedDifficulty}
+					/>
+				</View>
+
+				<View style={sheetStyles.sheet__actions}>
+					<Pressable
+						onPress={clearFilters}
+						style={sheetStyles.sheet__ghostButton}
+					>
+						<Text style={sheetStyles.sheet__ghostButtonText}>Сбросить</Text>
+					</Pressable>
+					<Pressable
+						onPress={() => setIsFiltersOpen(false)}
+						style={sheetStyles.sheet__primaryButton}
+					>
+						<Text style={sheetStyles.sheet__primaryButtonText}>Готово</Text>
+					</Pressable>
+				</View>
+			</BottomSheetPanel>
+
+			<BottomSheetPanel
+				keyboardAware
+				onClose={closeAnswerSheet}
+				visible={isAnswerSheetOpen}
+			>
+				<View style={sheetStyles.sheet__head}>
+					<View style={sheetStyles.sheet__titleIcon}>
+						<KeyboardIcon color={palette.accentStrong} size={18} />
+					</View>
+					<View style={sheetStyles.sheet__titleCopy}>
+						<Text style={sheetStyles.sheet__title}>Проверьте себя руками</Text>
+						<Text style={sheetStyles.sheet__subtitle}>
+							Умная проверка понимает пробелы, разные кавычки, `sudo` и
+							несколько допустимых вариантов.
+						</Text>
+					</View>
+				</View>
+
+				<View style={sheetStyles.prompt__card}>
+					<Text style={sheetStyles.prompt__label}>Вопрос</Text>
+					<Text style={sheetStyles.prompt__text}>{currentCard.question}</Text>
+				</View>
+
+				<View style={sheetStyles.input__block}>
+					<Text style={sheetStyles.input__label}>Команда</Text>
+					<TextInput
+						autoCapitalize="none"
+						autoCorrect={false}
+						onChangeText={(value) => {
+							setManualAnswer(value);
+							if (manualFeedback) {
+								setManualFeedback(null);
+							}
+						}}
+						placeholder="Введите команду"
+						placeholderTextColor={palette.textMuted}
+						style={sheetStyles.input__field}
+						value={manualAnswer}
+					/>
+				</View>
+
+				{manualFeedback ? (
+					<View
+						style={[
+							sheetStyles.feedback,
+							manualFeedback.tone === 'success'
+								? sheetStyles.feedbackSuccess
+								: sheetStyles.feedbackWarning,
+						]}
+					>
+						<View style={sheetStyles.feedback__head}>
+							{manualFeedback.tone === 'success' ? (
+								<CheckIcon color={palette.accentStrong} size={18} />
+							) : (
+								<ReviewIcon color="#f4a261" size={18} />
+							)}
+							<Text style={sheetStyles.feedback__title}>
+								{manualFeedback.title}
+							</Text>
+						</View>
+						<Text style={sheetStyles.feedback__body}>
+							{manualFeedback.body}
+						</Text>
+					</View>
+				) : null}
+
+				<View style={sheetStyles.sheet__actions}>
+					{manualFeedback?.tone === 'warning' ? (
+						<Pressable
+							onPress={sendManualToReview}
+							style={sheetStyles.sheet__ghostButton}
+						>
+							<Text style={sheetStyles.sheet__ghostButtonText}>В повтор</Text>
+						</Pressable>
+					) : (
+						<Pressable
+							onPress={closeAnswerSheet}
+							style={sheetStyles.sheet__ghostButton}
+						>
+							<Text style={sheetStyles.sheet__ghostButtonText}>Закрыть</Text>
+						</Pressable>
+					)}
+
+					<Pressable
+						onPress={() => void submitManualAnswer()}
+						style={sheetStyles.sheet__primaryButton}
+					>
+						<Text style={sheetStyles.sheet__primaryButtonText}>
+							{manualFeedback?.tone === 'warning'
+								? 'Проверить снова'
+								: 'Проверить'}
+						</Text>
+					</Pressable>
+				</View>
+			</BottomSheetPanel>
+
+			<Modal
+				animationType="slide"
+				onRequestClose={() => setIsDetailsOpen(false)}
+				presentationStyle="fullScreen"
+				visible={isDetailsOpen}
+			>
+				<SafeAreaView style={detailsStyles.screen}>
+					<View style={detailsStyles.screen__header}>
+						<View style={detailsStyles.screen__headerCopy}>
+							<Text style={detailsStyles.screen__eyebrow}>Подробнее по карточке</Text>
+							<Text style={detailsStyles.screen__title}>{currentCard.question}</Text>
+						</View>
+						<Pressable
+							onPress={() => setIsDetailsOpen(false)}
+							style={detailsStyles.screen__closeButton}
+						>
+							<Text style={detailsStyles.screen__closeButtonText}>Закрыть</Text>
+						</Pressable>
+					</View>
+
+					<ScrollView
+						contentContainerStyle={detailsStyles.screen__content}
+						showsVerticalScrollIndicator={false}
+					>
+						<View style={detailsStyles.card}>
+							<View style={detailsStyles.card__metaRail}>
+								<DetailMetaPill label={currentCard.category} />
+								<DetailMetaPill label={getDifficultyLabel(currentCard.difficulty)} />
+							</View>
+
+							<DetailPanel
+								body={currentCard.answer}
+								title="Правильный ответ"
+								tone="accent"
+							/>
+							<DetailPanel
+								body={currentCard.example}
+								title="Когда пригодится"
+								tone="default"
+							/>
+							<DetailPanel
+								body={currentCard.hint}
+								title="Подсказка для запоминания"
+								tone="subtle"
+							/>
+
+							{currentCard.acceptedAnswers?.length ? (
+								<DetailPanel
+									body={currentCard.acceptedAnswers.join('\n')}
+									title="Допустимые варианты"
+									tone="default"
+								/>
+							) : null}
+						</View>
+					</ScrollView>
+				</SafeAreaView>
+			</Modal>
+		</SafeAreaView>
+	);
 }
 
 function FilterRail({
-  onSelect,
-  optionKeys,
-  options,
-  selectedValue
+	onSelect,
+	optionKeys,
+	options,
+	selectedValue,
 }: {
-  onSelect: (value: string) => void;
-  optionKeys?: string[];
-  options: string[];
-  selectedValue: string;
+	onSelect: (value: string) => void;
+	optionKeys?: string[];
+	options: string[];
+	selectedValue: string;
 }) {
-  return (
-    <ScrollView
-      contentContainerStyle={styles.filterRail}
-      horizontal
-      showsHorizontalScrollIndicator={false}
-    >
-      {options.map((label, index) => {
-        const value = optionKeys?.[index] ?? label;
-        const isActive = value === selectedValue;
+	return (
+		<ScrollView
+			contentContainerStyle={sheetStyles.filterRail}
+			horizontal
+			showsHorizontalScrollIndicator={false}
+		>
+			{options.map((label, index) => {
+				const value = optionKeys?.[index] ?? label;
+				const isActive = value === selectedValue;
 
-        return (
-          <Pressable
-            key={value}
-            onPress={() => onSelect(value)}
-            style={[styles.filterChip, isActive && styles.filterChipActive]}
-          >
-            <Text style={[styles.filterText, isActive && styles.filterTextActive]}>
-              {label}
-            </Text>
-          </Pressable>
-        );
-      })}
-    </ScrollView>
-  );
+				return (
+					<Pressable
+						key={value}
+						onPress={() => onSelect(value)}
+						style={[
+							sheetStyles.filterRail__chip,
+							isActive && sheetStyles.filterRail__chipActive,
+						]}
+					>
+						<Text
+							style={[
+								sheetStyles.filterRail__chipText,
+								isActive && sheetStyles.filterRail__chipTextActive,
+							]}
+						>
+							{label}
+						</Text>
+					</Pressable>
+				);
+			})}
+		</ScrollView>
+	);
 }
 
-function StatPill({ label, value }: { label: string; value: number }) {
-  return (
-    <View style={styles.statPill}>
-      <Text style={styles.statPillValue}>{value}</Text>
-      <Text style={styles.statPillLabel}>{label}</Text>
-    </View>
-  );
+function CompletionChip({
+	icon,
+	label,
+	tone,
+	value,
+}: {
+	icon: ReactNode;
+	label: string;
+	tone: 'success' | 'warning';
+	value: number;
+}) {
+	return (
+		<View
+			style={[
+				emptyStyles.chip,
+				tone === 'success' ? emptyStyles.chipSuccess : emptyStyles.chipWarning,
+			]}
+		>
+			<View style={emptyStyles.chip__icon}>{icon}</View>
+			<Text style={emptyStyles.chip__value}>{value}</Text>
+			<Text style={emptyStyles.chip__label}>{label}</Text>
+		</View>
+	);
+}
+
+function DetailMetaPill({ label }: { label: string }) {
+	return (
+		<View style={detailsStyles.metaPill}>
+			<Text numberOfLines={1} style={detailsStyles.metaPill__text}>
+				{label}
+			</Text>
+		</View>
+	);
+}
+
+function DetailPanel({
+	body,
+	title,
+	tone,
+}: {
+	body: string;
+	title: string;
+	tone: 'accent' | 'default' | 'subtle';
+}) {
+	return (
+		<View
+			style={[
+				detailsStyles.panel,
+				tone === 'accent' && detailsStyles.panelAccent,
+				tone === 'subtle' && detailsStyles.panelSubtle,
+			]}
+		>
+			<Text style={detailsStyles.panel__title}>{title}</Text>
+			<Text
+				style={tone === 'accent' ? detailsStyles.panel__answer : detailsStyles.panel__body}
+			>
+				{body}
+			</Text>
+		</View>
+	);
+}
+
+function getDifficultyLabel(value: Card['difficulty']) {
+	switch (value) {
+		case 'easy':
+			return 'Легко';
+		case 'medium':
+			return 'Средне';
+		case 'hard':
+			return 'Сложно';
+		default:
+			return value;
+	}
 }
 
 function BackgroundDecor() {
-  return (
-    <>
-      <View style={styles.backgroundBase} />
-      <View style={styles.greenGlow} />
-      <View style={styles.blueGlow} />
-      <View style={styles.orangeGlow} />
-      <View style={styles.gridLineLeft} />
-      <View style={styles.gridLineRight} />
-    </>
-  );
+	return (
+		<>
+			<View style={screenStyles.backgroundBase} />
+			<View style={screenStyles.glowMint} />
+			<View style={screenStyles.glowBlue} />
+			<View style={screenStyles.glowAmber} />
+			<View style={screenStyles.gridLineLeft} />
+			<View style={screenStyles.gridLineRight} />
+		</>
+	);
 }
 
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: palette.background
-  },
-  backgroundBase: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: palette.background
-  },
-  greenGlow: {
-    position: "absolute",
-    top: -150,
-    left: -70,
-    width: 300,
-    height: 300,
-    borderRadius: 150,
-    backgroundColor: palette.glowMint
-  },
-  blueGlow: {
-    position: "absolute",
-    top: 120,
-    right: -110,
-    width: 340,
-    height: 340,
-    borderRadius: 170,
-    backgroundColor: palette.glowBlue
-  },
-  orangeGlow: {
-    position: "absolute",
-    bottom: -100,
-    left: 20,
-    width: 260,
-    height: 260,
-    borderRadius: 130,
-    backgroundColor: palette.glowAmber
-  },
-  gridLineLeft: {
-    position: "absolute",
-    top: 0,
-    bottom: 0,
-    left: 30,
-    width: 1,
-    backgroundColor: palette.hairline
-  },
-  gridLineRight: {
-    position: "absolute",
-    top: 0,
-    bottom: 0,
-    right: 30,
-    width: 1,
-    backgroundColor: palette.hairline
-  },
-  loader: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 12
-  },
-  loaderText: {
-    color: palette.textSecondary,
-    fontSize: 16
-  },
-  chrome: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    gap: 10
-  },
-  chromeTopRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    gap: 12
-  },
-  brand: {
-    color: palette.accentStrong,
-    fontSize: 12,
-    fontWeight: "800",
-    letterSpacing: 1.8,
-    textTransform: "uppercase"
-  },
-  feedTitle: {
-    marginTop: 4,
-    color: palette.textPrimary,
-    fontSize: 18,
-    fontWeight: "800"
-  },
-  progressPill: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 999,
-    backgroundColor: palette.overlayPill,
-    borderWidth: 1,
-    borderColor: palette.borderStrong
-  },
-  progressPillText: {
-    color: palette.textPrimary,
-    fontSize: 13,
-    fontWeight: "800"
-  },
-  filterRail: {
-    gap: 8,
-    paddingRight: 14
-  },
-  filterChip: {
-    borderRadius: 999,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    backgroundColor: palette.overlayPill,
-    borderWidth: 1,
-    borderColor: palette.border
-  },
-  filterChipActive: {
-    backgroundColor: palette.accentStrong,
-    borderColor: palette.accentStrong
-  },
-  filterText: {
-    color: palette.textSecondary,
-    fontSize: 13,
-    fontWeight: "700"
-  },
-  filterTextActive: {
-    color: palette.background
-  },
-  feedStage: {
-    flex: 1,
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 14
-  },
-  backCard: {
-    position: "absolute",
-    left: 28,
-    right: 28,
-    bottom: 26,
-    height: "88%",
-    borderRadius: 34,
-    backgroundColor: "rgba(17, 28, 50, 0.55)",
-    borderWidth: 1,
-    borderColor: "rgba(77, 101, 138, 0.28)",
-    padding: 22
-  },
-  backCardGlow: {
-    position: "absolute",
-    left: 24,
-    right: 24,
-    bottom: 20,
-    height: 80,
-    borderRadius: 24,
-    backgroundColor: "rgba(130, 245, 208, 0.08)"
-  },
-  backCardLabel: {
-    color: palette.textMuted,
-    fontSize: 12,
-    fontWeight: "800",
-    letterSpacing: 1.2,
-    textTransform: "uppercase"
-  },
-  backCardCommand: {
-    marginTop: 10,
-    color: palette.accentStrong,
-    fontSize: 22,
-    fontWeight: "900"
-  },
-  backCardQuestion: {
-    marginTop: 12,
-    color: palette.textSecondary,
-    fontSize: 19,
-    lineHeight: 26,
-    fontWeight: "700",
-    maxWidth: "85%"
-  },
-  frontCard: {
-    flex: 1,
-    borderRadius: 34,
-    backgroundColor: palette.panelElevated,
-    borderWidth: 1,
-    borderColor: palette.border,
-    overflow: "hidden",
-    padding: 22,
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 18 },
-    shadowOpacity: 0.28,
-    shadowRadius: 30,
-    elevation: 12
-  },
-  swipeOverlay: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 24
-  },
-  knowOverlay: {
-    top: 0,
-    height: "48%",
-    backgroundColor: palette.overlaySuccess
-  },
-  reviewOverlay: {
-    bottom: 0,
-    height: "48%",
-    backgroundColor: palette.overlayWarning
-  },
-  swipeOverlayTitle: {
-    color: palette.textPrimary,
-    fontSize: 28,
-    fontWeight: "900",
-    letterSpacing: 2
-  },
-  swipeOverlaySubtitle: {
-    marginTop: 8,
-    color: palette.textPrimary,
-    fontSize: 14,
-    fontWeight: "700"
-  },
-  cardHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    gap: 12
-  },
-  commandChip: {
-    backgroundColor: palette.commandPill,
-    borderRadius: 999,
-    paddingHorizontal: 16,
-    paddingVertical: 10
-  },
-  commandChipText: {
-    color: palette.commandText,
-    fontSize: 22,
-    fontWeight: "900"
-  },
-  cardMeta: {
-    color: palette.textMuted,
-    fontSize: 13,
-    fontWeight: "700",
-    textTransform: "lowercase",
-    marginTop: 8
-  },
-  questionBlock: {
-    marginTop: 28,
-    gap: 12
-  },
-  questionEyebrow: {
-    color: palette.textMuted,
-    fontSize: 12,
-    fontWeight: "800",
-    letterSpacing: 1.3,
-    textTransform: "uppercase"
-  },
-  question: {
-    color: palette.textPrimary,
-    fontSize: 34,
-    fontWeight: "900",
-    lineHeight: 40
-  },
-  hintCard: {
-    marginTop: 18,
-    backgroundColor: palette.subtlePanel,
-    borderRadius: 22,
-    padding: 16,
-    gap: 8
-  },
-  shortHelp: {
-    marginTop: 18,
-    paddingVertical: 8
-  },
-  shortHelpText: {
-    color: palette.textSecondary,
-    fontSize: 16,
-    lineHeight: 24
-  },
-  bottomSurface: {
-    marginTop: "auto",
-    gap: 12
-  },
-  ctaRow: {
-    flexDirection: "row",
-    gap: 10
-  },
-  ghostButton: {
-    flex: 1,
-    backgroundColor: palette.secondaryButton,
-    borderRadius: 20,
-    paddingVertical: 15,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: palette.border
-  },
-  ghostButtonText: {
-    color: palette.textPrimary,
-    fontSize: 15,
-    fontWeight: "800"
-  },
-  primaryButton: {
-    flex: 1.2,
-    backgroundColor: palette.accentStrong,
-    borderRadius: 20,
-    paddingVertical: 15,
-    alignItems: "center",
-    justifyContent: "center"
-  },
-  primaryButtonText: {
-    color: palette.background,
-    fontSize: 16,
-    fontWeight: "900"
-  },
-  feedStatsRow: {
-    flexDirection: "row",
-    gap: 10
-  },
-  statPill: {
-    flex: 1,
-    backgroundColor: palette.footerPanel,
-    borderRadius: 18,
-    paddingVertical: 13,
-    paddingHorizontal: 8,
-    alignItems: "center",
-    gap: 2
-  },
-  statPillValue: {
-    color: palette.textPrimary,
-    fontSize: 18,
-    fontWeight: "900"
-  },
-  statPillLabel: {
-    color: palette.textMuted,
-    fontSize: 11,
-    fontWeight: "700"
-  },
-  answerSurface: {
-    backgroundColor: palette.answerPanel,
-    borderRadius: 24,
-    padding: 18,
-    gap: 10
-  },
-  surfaceLabel: {
-    color: palette.textMuted,
-    fontSize: 12,
-    fontWeight: "800",
-    letterSpacing: 1.4,
-    textTransform: "uppercase"
-  },
-  hintText: {
-    color: palette.textSecondary,
-    fontSize: 15,
-    lineHeight: 22
-  },
-  answer: {
-    color: palette.textPrimary,
-    fontSize: 26,
-    fontWeight: "900",
-    lineHeight: 32
-  },
-  swipeGuide: {
-    alignItems: "center",
-    paddingVertical: 4
-  },
-  swipeGuideText: {
-    color: palette.textSecondary,
-    fontSize: 14,
-    fontWeight: "700",
-    textAlign: "center"
-  },
-  emptyShell: {
-    flex: 1,
-    justifyContent: "center",
-    paddingHorizontal: 24,
-    gap: 16
-  },
-  emptyEyebrow: {
-    color: palette.accentStrong,
-    fontSize: 12,
-    fontWeight: "800",
-    letterSpacing: 1.4,
-    textTransform: "uppercase"
-  },
-  emptyTitle: {
-    color: palette.textPrimary,
-    fontSize: 30,
-    fontWeight: "900",
-    lineHeight: 36
-  },
-  emptyText: {
-    color: palette.textSecondary,
-    fontSize: 16,
-    lineHeight: 24
-  },
-  primaryAction: {
-    backgroundColor: palette.accentStrong,
-    borderRadius: 20,
-    paddingVertical: 16,
-    alignItems: "center"
-  },
-  primaryActionText: {
-    color: palette.background,
-    fontSize: 16,
-    fontWeight: "900"
-  },
-  secondaryAction: {
-    backgroundColor: palette.overlayPill,
-    borderRadius: 20,
-    paddingVertical: 16,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: palette.border
-  },
-  secondaryActionText: {
-    color: palette.textPrimary,
-    fontSize: 15,
-    fontWeight: "800"
-  },
-  finishStats: {
-    flexDirection: "row",
-    gap: 12
-  },
-  finishStatCard: {
-    flex: 1,
-    backgroundColor: palette.footerPanel,
-    borderRadius: 20,
-    padding: 16,
-    gap: 6
-  },
-  finishStatValue: {
-    color: palette.textPrimary,
-    fontSize: 28,
-    fontWeight: "900"
-  },
-  finishStatLabel: {
-    color: palette.textMuted,
-    fontSize: 12,
-    fontWeight: "800"
-  }
+const screenStyles = StyleSheet.create({
+	screen: {
+		flex: 1,
+		backgroundColor: palette.background,
+	},
+	backgroundBase: {
+		...StyleSheet.absoluteFillObject,
+		backgroundColor: palette.background,
+	},
+	glowMint: {
+		position: 'absolute',
+		top: -150,
+		left: -70,
+		width: 300,
+		height: 300,
+		borderRadius: 150,
+		backgroundColor: palette.glowMint,
+	},
+	glowBlue: {
+		position: 'absolute',
+		top: 110,
+		right: -110,
+		width: 340,
+		height: 340,
+		borderRadius: 170,
+		backgroundColor: palette.glowBlue,
+	},
+	glowAmber: {
+		position: 'absolute',
+		bottom: -100,
+		left: 20,
+		width: 260,
+		height: 260,
+		borderRadius: 130,
+		backgroundColor: palette.glowAmber,
+	},
+	gridLineLeft: {
+		position: 'absolute',
+		top: 0,
+		bottom: 0,
+		left: 30,
+		width: 1,
+		backgroundColor: palette.hairline,
+	},
+	gridLineRight: {
+		position: 'absolute',
+		top: 0,
+		bottom: 0,
+		right: 30,
+		width: 1,
+		backgroundColor: palette.hairline,
+	},
+	screen__content: {
+		flex: 1,
+	},
+	screen__frame: {
+		flex: 1,
+		width: '100%',
+		alignSelf: 'center',
+		position: 'relative',
+		paddingTop: 8,
+		paddingHorizontal: 16,
+		gap: 10,
+	},
+});
+
+const detailsStyles = StyleSheet.create({
+	screen: {
+		flex: 1,
+		backgroundColor: palette.background,
+	},
+	screen__header: {
+		paddingHorizontal: 20,
+		paddingTop: 12,
+		paddingBottom: 14,
+		flexDirection: 'row',
+		alignItems: 'flex-start',
+		justifyContent: 'space-between',
+		gap: 12,
+		borderBottomWidth: 1,
+		borderBottomColor: palette.border,
+		backgroundColor: 'rgba(8, 10, 13, 0.94)',
+	},
+	screen__headerCopy: {
+		flex: 1,
+		gap: 6,
+	},
+	screen__eyebrow: {
+		color: palette.accentStrong,
+		fontSize: 11,
+		fontWeight: '800',
+		letterSpacing: 1.2,
+		textTransform: 'uppercase',
+	},
+	screen__title: {
+		color: palette.textPrimary,
+		fontSize: 20,
+		fontWeight: '900',
+		lineHeight: 27,
+	},
+	screen__closeButton: {
+		paddingHorizontal: 15,
+		paddingVertical: 11,
+		borderRadius: 999,
+		borderWidth: 1,
+		borderColor: palette.border,
+		backgroundColor: palette.panelElevated,
+	},
+	screen__closeButtonText: {
+		color: palette.textPrimary,
+		fontSize: 13,
+		fontWeight: '800',
+	},
+	screen__content: {
+		paddingHorizontal: 16,
+		paddingTop: 18,
+		paddingBottom: 36,
+		alignItems: 'center',
+	},
+	card: {
+		width: '100%',
+		maxWidth: 760,
+		padding: 20,
+		borderRadius: 30,
+		borderWidth: 1,
+		borderColor: palette.border,
+		backgroundColor: palette.panel,
+		gap: 14,
+	},
+	card__metaRail: {
+		flexDirection: 'row',
+		gap: 10,
+	},
+	metaPill: {
+		flex: 1,
+		minWidth: 0,
+		paddingHorizontal: 13,
+		paddingVertical: 10,
+		borderRadius: 999,
+		borderWidth: 1,
+		borderColor: palette.border,
+		backgroundColor: palette.overlayPill,
+		alignItems: 'center',
+	},
+	metaPill__text: {
+		color: palette.textSecondary,
+		fontSize: 11,
+		fontWeight: '700',
+	},
+	panel: {
+		padding: 18,
+		borderRadius: 24,
+		borderWidth: 1,
+		borderColor: 'rgba(120, 130, 146, 0.12)',
+		backgroundColor: palette.footerPanel,
+		gap: 10,
+	},
+	panelAccent: {
+		backgroundColor: palette.answerPanel,
+	},
+	panelSubtle: {
+		backgroundColor: palette.subtlePanel,
+	},
+	panel__title: {
+		color: palette.textMuted,
+		fontSize: 11,
+		fontWeight: '800',
+		letterSpacing: 1.2,
+		textTransform: 'uppercase',
+	},
+	panel__answer: {
+		color: palette.textPrimary,
+		fontSize: 24,
+		fontWeight: '900',
+		lineHeight: 31,
+	},
+	panel__body: {
+		color: palette.textSecondary,
+		fontSize: 15,
+		lineHeight: 23,
+	},
+});
+
+const loaderStyles = StyleSheet.create({
+	loader: {
+		flex: 1,
+		alignItems: 'center',
+		justifyContent: 'center',
+		gap: 12,
+	},
+	loader__text: {
+		color: palette.textSecondary,
+		fontSize: 16,
+	},
+});
+
+const emptyStyles = StyleSheet.create({
+	empty: {
+		flex: 1,
+		justifyContent: 'center',
+		paddingHorizontal: 24,
+		gap: 16,
+	},
+	empty__eyebrow: {
+		color: palette.accentStrong,
+		fontSize: 12,
+		fontWeight: '800',
+		letterSpacing: 1.4,
+		textTransform: 'uppercase',
+	},
+	empty__title: {
+		color: palette.textPrimary,
+		fontSize: 30,
+		fontWeight: '900',
+		lineHeight: 36,
+	},
+	empty__body: {
+		color: palette.textSecondary,
+		fontSize: 16,
+		lineHeight: 24,
+	},
+	empty__statsRow: {
+		flexDirection: 'row',
+		gap: 12,
+	},
+	chip: {
+		flex: 1,
+		paddingHorizontal: 12,
+		paddingVertical: 14,
+		borderRadius: 20,
+		borderWidth: 1,
+		borderColor: palette.border,
+		gap: 4,
+		alignItems: 'center',
+	},
+	chipSuccess: {
+		backgroundColor: palette.successPanel,
+	},
+	chipWarning: {
+		backgroundColor: palette.warningPanel,
+	},
+	chip__icon: {
+		width: 32,
+		height: 32,
+		borderRadius: 12,
+		alignItems: 'center',
+		justifyContent: 'center',
+		backgroundColor: 'rgba(255, 255, 255, 0.04)',
+	},
+	chip__value: {
+		color: palette.textPrimary,
+		fontSize: 18,
+		fontWeight: '900',
+	},
+	chip__label: {
+		color: palette.textMuted,
+		fontSize: 11,
+		fontWeight: '700',
+	},
+	empty__primaryAction: {
+		backgroundColor: palette.accentStrong,
+		borderRadius: 20,
+		paddingVertical: 16,
+		alignItems: 'center',
+	},
+	empty__primaryActionText: {
+		color: palette.background,
+		fontSize: 16,
+		fontWeight: '900',
+	},
+	empty__secondaryAction: {
+		backgroundColor: palette.overlayPill,
+		borderRadius: 20,
+		paddingVertical: 16,
+		alignItems: 'center',
+		borderWidth: 1,
+		borderColor: palette.border,
+	},
+	empty__secondaryActionText: {
+		color: palette.textPrimary,
+		fontSize: 15,
+		fontWeight: '800',
+	},
+});
+
+const toastStyles = StyleSheet.create({
+	toast: {
+		position: 'absolute',
+		left: 16,
+		right: 16,
+		bottom: 142,
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: 12,
+		borderRadius: 22,
+		paddingHorizontal: 16,
+		paddingVertical: 13,
+		borderWidth: 1,
+		zIndex: 30,
+		elevation: 20,
+	},
+	toastSuccess: {
+		backgroundColor: 'rgba(7, 18, 21, 0.94)',
+		borderColor: 'rgba(130, 245, 208, 0.22)',
+	},
+	toastWarning: {
+		backgroundColor: 'rgba(32, 19, 14, 0.94)',
+		borderColor: 'rgba(244, 162, 97, 0.22)',
+	},
+	toast__iconWrap: {
+		width: 34,
+		height: 34,
+		borderRadius: 12,
+		backgroundColor: 'rgba(255, 255, 255, 0.03)',
+		alignItems: 'center',
+		justifyContent: 'center',
+	},
+	toast__copy: {
+		flex: 1,
+		gap: 2,
+	},
+	toast__title: {
+		color: palette.textPrimary,
+		fontSize: 14,
+		fontWeight: '800',
+	},
+	toast__body: {
+		color: palette.textSecondary,
+		fontSize: 12,
+		lineHeight: 18,
+	},
+});
+
+const sheetStyles = StyleSheet.create({
+	sheet__head: {
+		flexDirection: 'row',
+		alignItems: 'flex-start',
+		gap: 12,
+	},
+	sheet__titleIcon: {
+		width: 38,
+		height: 38,
+		borderRadius: 14,
+		alignItems: 'center',
+		justifyContent: 'center',
+		backgroundColor: 'rgba(130, 245, 208, 0.08)',
+	},
+	sheet__titleCopy: {
+		flex: 1,
+		gap: 6,
+	},
+	sheet__title: {
+		color: palette.textPrimary,
+		fontSize: 24,
+		fontWeight: '900',
+	},
+	sheet__subtitle: {
+		color: palette.textSecondary,
+		fontSize: 14,
+		lineHeight: 21,
+	},
+	sheet__section: {
+		gap: 8,
+	},
+	sheet__sectionTitle: {
+		color: palette.textPrimary,
+		fontSize: 12,
+		fontWeight: '800',
+	},
+	filterRail: {
+		gap: 8,
+		paddingRight: 10,
+	},
+	filterRail__chip: {
+		borderRadius: 999,
+		paddingHorizontal: 12,
+		paddingVertical: 8,
+		borderWidth: 1,
+		borderColor: palette.border,
+		backgroundColor: palette.overlayPill,
+	},
+	filterRail__chipActive: {
+		borderColor: palette.accentStrong,
+		backgroundColor: palette.accentStrong,
+	},
+	filterRail__chipText: {
+		color: palette.textSecondary,
+		fontSize: 11,
+		fontWeight: '700',
+	},
+	filterRail__chipTextActive: {
+		color: palette.background,
+	},
+	prompt__card: {
+		padding: 16,
+		borderRadius: 20,
+		borderWidth: 1,
+		borderColor: palette.border,
+		backgroundColor: palette.footerPanel,
+		gap: 8,
+	},
+	prompt__label: {
+		color: palette.textMuted,
+		fontSize: 11,
+		fontWeight: '800',
+		letterSpacing: 1.1,
+		textTransform: 'uppercase',
+	},
+	prompt__text: {
+		color: palette.textPrimary,
+		fontSize: 19,
+		fontWeight: '800',
+		lineHeight: 25,
+	},
+	input__block: {
+		gap: 8,
+	},
+	input__label: {
+		color: palette.textPrimary,
+		fontSize: 12,
+		fontWeight: '800',
+	},
+	input__field: {
+		borderRadius: 18,
+		borderWidth: 1,
+		borderColor: palette.border,
+		backgroundColor: palette.footerPanel,
+		color: palette.textPrimary,
+		fontSize: 16,
+		paddingHorizontal: 16,
+		paddingVertical: 14,
+	},
+	feedback: {
+		padding: 14,
+		borderRadius: 18,
+		gap: 8,
+	},
+	feedbackSuccess: {
+		backgroundColor: palette.successPanel,
+	},
+	feedbackWarning: {
+		backgroundColor: palette.warningPanel,
+	},
+	feedback__head: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: 8,
+	},
+	feedback__title: {
+		color: palette.textPrimary,
+		fontSize: 15,
+		fontWeight: '800',
+	},
+	feedback__body: {
+		color: palette.textSecondary,
+		fontSize: 13,
+		lineHeight: 20,
+	},
+	sheet__actions: {
+		flexDirection: 'row',
+		gap: 12,
+	},
+	sheet__ghostButton: {
+		flex: 1,
+		borderRadius: 18,
+		paddingVertical: 15,
+		alignItems: 'center',
+		justifyContent: 'center',
+		borderWidth: 1,
+		borderColor: palette.border,
+		backgroundColor: palette.overlayPill,
+	},
+	sheet__ghostButtonText: {
+		color: palette.textPrimary,
+		fontSize: 15,
+		fontWeight: '800',
+	},
+	sheet__primaryButton: {
+		flex: 1.2,
+		borderRadius: 18,
+		paddingVertical: 15,
+		alignItems: 'center',
+		justifyContent: 'center',
+		backgroundColor: palette.accentStrong,
+	},
+	sheet__primaryButtonText: {
+		color: palette.background,
+		fontSize: 15,
+		fontWeight: '900',
+	},
 });
