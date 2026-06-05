@@ -18,11 +18,12 @@ import {
 	ReviewIcon,
 	SparkIcon,
 	TargetIcon,
-} from '../components/AppIcon';
+} from '../../../shared/components/icons/AppIcons';
+import { AnimatedBackdrop } from '../../../shared/components/AnimatedBackdrop';
 import { useLearning } from '../context/LearningContext';
-import { palette } from '../theme/palette';
+import { palette } from '../../../shared/theme/palette';
 
-export function StatsScreen() {
+export function ProgressScreen() {
 	const { isHydrated, restart, stats } = useLearning();
 	const tabBarHeight = useBottomTabBarHeight();
 	const { width } = useWindowDimensions();
@@ -31,7 +32,7 @@ export function StatsScreen() {
 	if (!isHydrated) {
 		return (
 			<SafeAreaView style={styles.screen}>
-				<BackgroundDecor />
+				<AnimatedBackdrop />
 				<View style={styles.loader}>
 					<ActivityIndicator color={palette.accentStrong} size="large" />
 				</View>
@@ -51,7 +52,7 @@ export function StatsScreen() {
 
 	return (
 		<SafeAreaView style={styles.screen}>
-			<BackgroundDecor />
+			<AnimatedBackdrop />
 
 			<ScrollView
 				contentContainerStyle={[
@@ -341,52 +342,10 @@ function BreakdownRow({
 	);
 }
 
-function BackgroundDecor() {
-	return (
-		<>
-			<View style={styles.backgroundBase} />
-			<View style={styles.greenGlow} />
-			<View style={styles.blueGlow} />
-			<View style={styles.orangeGlow} />
-		</>
-	);
-}
-
 const styles = StyleSheet.create({
 	screen: {
 		flex: 1,
 		backgroundColor: palette.background,
-	},
-	backgroundBase: {
-		...StyleSheet.absoluteFillObject,
-		backgroundColor: palette.background,
-	},
-	greenGlow: {
-		position: 'absolute',
-		top: -180,
-		right: -60,
-		width: 280,
-		height: 280,
-		borderRadius: 140,
-		backgroundColor: palette.glowMint,
-	},
-	blueGlow: {
-		position: 'absolute',
-		top: 180,
-		left: -90,
-		width: 320,
-		height: 320,
-		borderRadius: 160,
-		backgroundColor: palette.glowBlue,
-	},
-	orangeGlow: {
-		position: 'absolute',
-		bottom: -80,
-		right: 10,
-		width: 220,
-		height: 220,
-		borderRadius: 110,
-		backgroundColor: palette.glowAmber,
 	},
 	loader: {
 		flex: 1,

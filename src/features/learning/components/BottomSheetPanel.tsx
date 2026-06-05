@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, View } from "react-native";
 
-import { palette } from "../../theme/palette";
+import { palette } from "../../../shared/theme/palette";
 
 type BottomSheetPanelProps = {
   children: ReactNode;

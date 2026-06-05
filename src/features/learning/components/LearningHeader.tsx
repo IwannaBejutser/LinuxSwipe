@@ -1,27 +1,40 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { FilterIcon } from "../AppIcon";
-import { palette } from "../../theme/palette";
+import { FilterIcon } from "../../../shared/components/icons/AppIcons";
+import { palette } from "../../../shared/theme/palette";
 
-type LearnHeaderProps = {
+type LearningHeaderProps = {
   activeFiltersCount: number;
+  isCompact?: boolean;
   onOpenFilters: () => void;
 };
 
-export function LearnHeader({ activeFiltersCount, onOpenFilters }: LearnHeaderProps) {
+export function LearningHeader({
+  activeFiltersCount,
+  isCompact = false,
+  onOpenFilters
+}: LearningHeaderProps) {
   return (
     <View style={styles.header}>
       <View style={styles.header__copy}>
-        <Text style={styles.header__brand}>LinuxSwipe</Text>
-        <Text style={styles.header__title}>Учебная сессия</Text>
+        <Text style={[styles.header__brand, isCompact && styles.header__brandCompact]}>
+          LinuxSwipe
+        </Text>
+        <Text style={[styles.header__title, isCompact && styles.header__titleCompact]}>
+          Учебная сессия
+        </Text>
       </View>
 
       <Pressable
         onPress={onOpenFilters}
-        style={({ pressed }) => [styles.header__button, pressed && styles.header__buttonPressed]}
+        style={({ pressed }) => [
+          styles.header__button,
+          isCompact && styles.header__buttonCompact,
+          pressed && styles.header__buttonPressed
+        ]}
       >
         <FilterIcon color={palette.textPrimary} size={16} />
-        <Text style={styles.header__buttonText}>
+        <Text style={[styles.header__buttonText, isCompact && styles.header__buttonTextCompact]}>
           {activeFiltersCount > 0 ? `Фильтры ${activeFiltersCount}` : "Фильтры"}
         </Text>
       </Pressable>
@@ -31,8 +44,8 @@ export function LearnHeader({ activeFiltersCount, onOpenFilters }: LearnHeaderPr
 
 const styles = StyleSheet.create({
   header: {
-    width: "100%",
     flexDirection: "row",
+    alignSelf: "stretch",
     alignItems: "center",
     justifyContent: "space-between",
     gap: 12
@@ -47,12 +60,20 @@ const styles = StyleSheet.create({
     letterSpacing: 1.6,
     textTransform: "uppercase"
   },
+  header__brandCompact: {
+    fontSize: 10,
+    letterSpacing: 1.4
+  },
   header__title: {
     marginTop: 4,
     color: palette.textPrimary,
     fontSize: 20,
     fontWeight: "900",
     lineHeight: 24
+  },
+  header__titleCompact: {
+    fontSize: 18,
+    lineHeight: 22
   },
   header__button: {
     flexDirection: "row",
@@ -65,6 +86,11 @@ const styles = StyleSheet.create({
     borderColor: palette.border,
     backgroundColor: palette.overlayPill
   },
+  header__buttonCompact: {
+    gap: 7,
+    paddingHorizontal: 12,
+    paddingVertical: 9
+  },
   header__buttonPressed: {
     opacity: 0.92
   },
@@ -72,5 +98,8 @@ const styles = StyleSheet.create({
     color: palette.textPrimary,
     fontSize: 12,
     fontWeight: "800"
+  },
+  header__buttonTextCompact: {
+    fontSize: 11
   }
 });

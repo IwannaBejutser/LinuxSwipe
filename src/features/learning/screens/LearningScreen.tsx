@@ -15,20 +15,21 @@ import {
 } from 'react-native';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 
-import { ActionDock } from '../components/learn/ActionDock';
-import { BottomSheetPanel } from '../components/learn/BottomSheetPanel';
-import { LearnHeader } from '../components/learn/LearnHeader';
-import { LearningCard } from '../components/learn/LearningCard';
-import { SessionStrip } from '../components/learn/SessionStrip';
+import { ActionDock } from '../components/ActionDock';
+import { BottomSheetPanel } from '../components/BottomSheetPanel';
+import { LearningHeader } from '../components/LearningHeader';
+import { LearningCard } from '../components/LearningCard';
+import { LearningSessionStrip } from '../components/LearningSessionStrip';
 import {
 	BoltIcon,
 	CheckIcon,
 	FilterIcon,
 	KeyboardIcon,
 	ReviewIcon,
-} from '../components/AppIcon';
+} from '../../../shared/components/icons/AppIcons';
+import { AnimatedBackdrop } from '../../../shared/components/AnimatedBackdrop';
 import { useLearning } from '../context/LearningContext';
-import { palette } from '../theme/palette';
+import { palette } from '../../../shared/theme/palette';
 import { Card } from '../types/card';
 
 const ALL_CATEGORIES_LABEL = 'Все темы';
@@ -187,7 +188,7 @@ function interleaveDeck(primaryCards: Card[], reviewCards: Card[], every = 3) {
 	return deck;
 }
 
-export function HomeScreen() {
+export function LearningScreen() {
 	const {
 		cards,
 		isHydrated,
@@ -199,8 +200,14 @@ export function HomeScreen() {
 		stats,
 	} = useLearning();
 	const tabBarHeight = useBottomTabBarHeight();
-	const { width } = useWindowDimensions();
+	const { height, width } = useWindowDimensions();
 	const frameMaxWidth = width >= 768 ? 720 : undefined;
+	const isCompactViewport = width < 390;
+	const isDenseViewport = isCompactViewport || height < 760;
+	const frameWidth =
+		width >= 768
+			? Math.min(width - 32, 720)
+			: Math.max(width - (isCompactViewport ? 28 : 32), 0);
 	const [selectedCategory, setSelectedCategory] =
 		useState(ALL_CATEGORIES_LABEL);
 	const [selectedDifficulty, setSelectedDifficulty] =
@@ -549,7 +556,7 @@ export function HomeScreen() {
 	if (!isHydrated) {
 		return (
 			<SafeAreaView style={screenStyles.screen}>
-				<BackgroundDecor />
+				<AnimatedBackdrop />
 				<View style={loaderStyles.loader}>
 					<ActivityIndicator color={palette.accentStrong} size="large" />
 					<Text style={loaderStyles.loader__text}>
@@ -563,7 +570,7 @@ export function HomeScreen() {
 	if (filteredCards.length === 0) {
 		return (
 			<SafeAreaView style={screenStyles.screen}>
-				<BackgroundDecor />
+				<AnimatedBackdrop />
 				<View style={emptyStyles.empty}>
 					<Text style={emptyStyles.empty__eyebrow}>
 						{deckMode === 'review' ? 'Режим повторения' : 'Фильтры'}
@@ -594,7 +601,7 @@ export function HomeScreen() {
 	if (!currentCard) {
 		return (
 			<SafeAreaView style={screenStyles.screen}>
-				<BackgroundDecor />
+				<AnimatedBackdrop />
 				<View style={emptyStyles.empty}>
 					<Text style={emptyStyles.empty__eyebrow}>
 						{deckMode === 'review'
@@ -658,26 +665,30 @@ export function HomeScreen() {
 
 	return (
 		<SafeAreaView style={screenStyles.screen}>
-			<BackgroundDecor />
+			<AnimatedBackdrop />
 
 			<View
 				style={[
 					screenStyles.screen__content,
-					{ paddingBottom: tabBarHeight + 24 },
+					{ paddingBottom: tabBarHeight + (isDenseViewport ? 14 : 24) },
 				]}
 			>
 				<View
 					style={[
 						screenStyles.screen__frame,
+						isDenseViewport ? screenStyles.screen__frameCompact : null,
+						{ width: frameWidth },
 						frameMaxWidth ? { maxWidth: frameMaxWidth } : null,
 					]}
 				>
-					<LearnHeader
+					<LearningHeader
 						activeFiltersCount={activeFiltersCount}
+						isCompact={isDenseViewport}
 						onOpenFilters={() => setIsFiltersOpen(true)}
 					/>
 
-					<SessionStrip
+					<LearningSessionStrip
+						isCompact={isDenseViewport}
 						progressRatio={progressRatio}
 						remainingCount={remainingCards.length}
 						reviewCount={reviewCount}
@@ -689,6 +700,7 @@ export function HomeScreen() {
 						currentCard={currentCard}
 						deckLabel={deckLabel}
 						flipProgress={flipProgress}
+						isCompact={isDenseViewport}
 						isCardFlipped={isCardFlipped}
 						nextCard={nextCard}
 						onOpenDetails={() => setIsDetailsOpen(true)}
@@ -702,6 +714,7 @@ export function HomeScreen() {
 					/>
 
 					<ActionDock
+						isCompact={isDenseViewport}
 						onOpenManualAnswer={() => setIsAnswerSheetOpen(true)}
 						onSendKnown={() => completeSwipe(currentCard, 'up')}
 						onSendReview={() => completeSwipe(currentCard, 'down')}
@@ -1080,82 +1093,26 @@ function getDifficultyLabel(value: Card['difficulty']) {
 	}
 }
 
-function BackgroundDecor() {
-	return (
-		<>
-			<View style={screenStyles.backgroundBase} />
-			<View style={screenStyles.glowMint} />
-			<View style={screenStyles.glowBlue} />
-			<View style={screenStyles.glowAmber} />
-			<View style={screenStyles.gridLineLeft} />
-			<View style={screenStyles.gridLineRight} />
-		</>
-	);
-}
-
 const screenStyles = StyleSheet.create({
 	screen: {
 		flex: 1,
 		backgroundColor: palette.background,
-	},
-	backgroundBase: {
-		...StyleSheet.absoluteFillObject,
-		backgroundColor: palette.background,
-	},
-	glowMint: {
-		position: 'absolute',
-		top: -150,
-		left: -70,
-		width: 300,
-		height: 300,
-		borderRadius: 150,
-		backgroundColor: palette.glowMint,
-	},
-	glowBlue: {
-		position: 'absolute',
-		top: 110,
-		right: -110,
-		width: 340,
-		height: 340,
-		borderRadius: 170,
-		backgroundColor: palette.glowBlue,
-	},
-	glowAmber: {
-		position: 'absolute',
-		bottom: -100,
-		left: 20,
-		width: 260,
-		height: 260,
-		borderRadius: 130,
-		backgroundColor: palette.glowAmber,
-	},
-	gridLineLeft: {
-		position: 'absolute',
-		top: 0,
-		bottom: 0,
-		left: 30,
-		width: 1,
-		backgroundColor: palette.hairline,
-	},
-	gridLineRight: {
-		position: 'absolute',
-		top: 0,
-		bottom: 0,
-		right: 30,
-		width: 1,
-		backgroundColor: palette.hairline,
+		overflow: 'hidden',
 	},
 	screen__content: {
 		flex: 1,
+		alignItems: 'center',
 	},
 	screen__frame: {
 		flex: 1,
-		width: '100%',
 		alignSelf: 'center',
 		position: 'relative',
 		paddingTop: 8,
-		paddingHorizontal: 16,
 		gap: 10,
+	},
+	screen__frameCompact: {
+		paddingTop: 6,
+		gap: 8,
 	},
 });
 

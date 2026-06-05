@@ -1,6 +1,6 @@
 import { createContext, PropsWithChildren, useContext, useEffect, useRef, useState } from "react";
 
-import { cards } from "../constants/cards";
+import { cards } from "../data/learningCards";
 import { loadLearningState, saveLearningState } from "../storage/learningStorage";
 import { Card } from "../types/card";
 import {

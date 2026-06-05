@@ -5,17 +5,19 @@ import {
   Pressable,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View
 } from "react-native";
 
-import { CheckIcon, SparkIcon } from "../AppIcon";
-import { Card } from "../../types/card";
-import { palette } from "../../theme/palette";
+import { CheckIcon, SparkIcon } from "../../../shared/components/icons/AppIcons";
+import { Card } from "../types/card";
+import { palette } from "../../../shared/theme/palette";
 
 type LearningCardProps = {
   currentCard: Card;
   deckLabel: string;
   flipProgress: Animated.Value;
+  isCompact?: boolean;
   isCardFlipped: boolean;
   nextCard: Card | null;
   onOpenDetails: () => void;
@@ -32,6 +34,7 @@ export function LearningCard({
   currentCard,
   deckLabel,
   flipProgress,
+  isCompact = false,
   isCardFlipped,
   nextCard,
   onOpenDetails,
@@ -43,6 +46,11 @@ export function LearningCard({
   swipeOffset,
   warningGlow
 }: LearningCardProps) {
+  const { width } = useWindowDimensions();
+  const isNarrow = isCompact || width < 390;
+  const questionFontSize = isNarrow ? 24 : 32;
+  const questionLineHeight = isNarrow ? 30 : 38;
+
   const swipeUpOpacity = swipeOffset.interpolate({
     inputRange: [-180, -40, 0],
     outputRange: [0.18, 0.05, 0],
@@ -133,20 +141,59 @@ export function LearningCard({
         >
           <Pressable onPress={onToggleFace} style={styles.cardFace__pressable}>
             <View style={styles.cardFace__metaRail}>
-              <MetaPill align="flex-start" label={currentCard.category} />
-              <MetaPill align="center" label={`${sessionIndex}/${sessionTotal}`} />
-              <MetaPill align="flex-end" label={getDifficultyLabel(currentCard.difficulty)} />
+              <MetaPill
+                align="flex-start"
+                isCompact={isNarrow}
+                label={currentCard.category}
+                variant="category"
+              />
+              <MetaPill
+                align="center"
+                isCompact={isNarrow}
+                label={`${sessionIndex}/${sessionTotal}`}
+                variant="index"
+              />
+              <MetaPill
+                align="flex-end"
+                isCompact={isNarrow}
+                label={getDifficultyLabel(currentCard.difficulty)}
+                variant="difficulty"
+              />
             </View>
 
-            <View style={styles.cardFace__questionBlock}>
-              <Text style={styles.cardFace__eyebrow}>Сценарий</Text>
-              <Text style={styles.cardFace__question}>{currentCard.question}</Text>
+            <View
+              style={[
+                styles.cardFace__questionBlock,
+                isNarrow && styles.cardFace__questionBlockCompact
+              ]}
+            >
+              <Text style={[styles.cardFace__eyebrow, isNarrow && styles.cardFace__eyebrowCompact]}>
+                Сценарий
+              </Text>
+              <Text
+                style={[
+                  styles.cardFace__question,
+                  isNarrow && styles.cardFace__questionCompact,
+                  { fontSize: questionFontSize, lineHeight: questionLineHeight }
+                ]}
+              >
+                {currentCard.question}
+              </Text>
             </View>
 
-            <View style={styles.cardFace__footer}>
+            <View style={[styles.cardFace__footer, isNarrow && styles.cardFace__footerCompact]}>
               <View style={styles.cardFace__footerHead}>
-                <Text style={styles.cardFace__footerTitle}>{deckLabel}</Text>
-                <Text style={styles.cardFace__footerMeta}>Карточка в фокусе</Text>
+                <Text
+                  style={[
+                    styles.cardFace__footerTitle,
+                    isNarrow && styles.cardFace__footerTitleCompact
+                  ]}
+                >
+                  {deckLabel}
+                </Text>
+                {!isNarrow ? (
+                  <Text style={styles.cardFace__footerMeta}>Карточка в фокусе</Text>
+                ) : null}
               </View>
               <View style={styles.cardFace__footerTrack}>
                 <View
@@ -173,9 +220,24 @@ export function LearningCard({
         >
           <View style={styles.cardFace__pressable}>
             <View style={styles.cardFace__metaRail}>
-              <MetaPill align="flex-start" label={currentCard.category} />
-              <MetaPill align="center" label={`${sessionIndex}/${sessionTotal}`} />
-              <MetaPill align="flex-end" label={getDifficultyLabel(currentCard.difficulty)} />
+              <MetaPill
+                align="flex-start"
+                isCompact={isNarrow}
+                label={currentCard.category}
+                variant="category"
+              />
+              <MetaPill
+                align="center"
+                isCompact={isNarrow}
+                label={`${sessionIndex}/${sessionTotal}`}
+                variant="index"
+              />
+              <MetaPill
+                align="flex-end"
+                isCompact={isNarrow}
+                label={getDifficultyLabel(currentCard.difficulty)}
+                variant="difficulty"
+              />
             </View>
 
             <Pressable onPress={onToggleFace}>
@@ -213,14 +275,30 @@ export function LearningCard({
 
 function MetaPill({
   align,
-  label
+  isCompact = false,
+  label,
+  variant = "category"
 }: {
   align: "center" | "flex-end" | "flex-start";
+  isCompact?: boolean;
   label: string;
+  variant?: "category" | "difficulty" | "index";
 }) {
   return (
-    <View style={[styles.metaPill, { alignItems: align }]}>
-      <Text numberOfLines={1} style={styles.metaPill__text}>
+    <View
+      style={[
+        styles.metaPill,
+        variant === "category" && styles.metaPillCategory,
+        variant === "index" && styles.metaPillIndex,
+        variant === "difficulty" && styles.metaPillDifficulty,
+        isCompact && styles.metaPillCompact,
+        { alignItems: align }
+      ]}
+    >
+      <Text
+        numberOfLines={1}
+        style={[styles.metaPill__text, isCompact && styles.metaPill__textCompact]}
+      >
         {label}
       </Text>
     </View>
@@ -272,11 +350,14 @@ function getDifficultyLabel(value: Card["difficulty"]) {
 
 const styles = StyleSheet.create({
   cardStage: {
-    width: "100%",
+    alignSelf: "stretch",
     flex: 1,
     minHeight: 0,
     paddingBottom: 2,
-    overflow: "visible"
+    overflow: "visible",
+    position: "relative",
+    zIndex: 20,
+    elevation: 20
   },
   cardStage__queueCard: {
     position: "absolute",
@@ -316,6 +397,7 @@ const styles = StyleSheet.create({
   },
   card: {
     flex: 1,
+    position: "relative",
     borderRadius: 34,
     borderWidth: 1,
     borderColor: palette.border,
@@ -325,8 +407,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 18 },
     shadowOpacity: 0.28,
     shadowRadius: 30,
-    elevation: 18,
-    zIndex: 20
+    elevation: 24,
+    zIndex: 24
   },
   card__glowSuccess: {
     ...StyleSheet.absoluteFillObject,
@@ -383,6 +465,11 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     gap: 10
   },
+  cardFace__questionBlockCompact: {
+    paddingTop: 6,
+    paddingBottom: 12,
+    gap: 8
+  },
   cardFace__eyebrow: {
     color: palette.textMuted,
     fontSize: 12,
@@ -390,16 +477,25 @@ const styles = StyleSheet.create({
     letterSpacing: 1.3,
     textTransform: "uppercase"
   },
+  cardFace__eyebrowCompact: {
+    fontSize: 11
+  },
   cardFace__question: {
-    maxWidth: "92%",
+    maxWidth: "100%",
     color: palette.textPrimary,
-    fontSize: 32,
     fontWeight: "900",
-    lineHeight: 38
+    flexShrink: 1
+  },
+  cardFace__questionCompact: {
+    maxWidth: "100%"
   },
   cardFace__footer: {
     gap: 10,
     paddingTop: 14
+  },
+  cardFace__footerCompact: {
+    gap: 8,
+    paddingTop: 10
   },
   cardFace__footerHead: {
     flexDirection: "row",
@@ -411,6 +507,9 @@ const styles = StyleSheet.create({
     color: palette.textPrimary,
     fontSize: 13,
     fontWeight: "800"
+  },
+  cardFace__footerTitleCompact: {
+    fontSize: 12
   },
   cardFace__footerMeta: {
     color: palette.textMuted,
@@ -482,7 +581,6 @@ const styles = StyleSheet.create({
     fontWeight: "900"
   },
   metaPill: {
-    flex: 1,
     minWidth: 0,
     borderRadius: 999,
     paddingHorizontal: 12,
@@ -491,10 +589,26 @@ const styles = StyleSheet.create({
     borderColor: palette.border,
     backgroundColor: palette.overlayPill
   },
+  metaPillCategory: {
+    flex: 1.35
+  },
+  metaPillIndex: {
+    flex: 0.8
+  },
+  metaPillDifficulty: {
+    flex: 1
+  },
+  metaPillCompact: {
+    paddingHorizontal: 10,
+    paddingVertical: 7
+  },
   metaPill__text: {
     color: palette.textSecondary,
     fontSize: 11,
     fontWeight: "700"
+  },
+  metaPill__textCompact: {
+    fontSize: 10
   },
   surface: {
     marginTop: 10,

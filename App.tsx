@@ -9,11 +9,13 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { CardsIcon, ChartIcon } from './src/components/AppIcon';
-import { LearningProvider } from './src/context/LearningContext';
-import { HomeScreen } from './src/screens/HomeScreen';
-import { StatsScreen } from './src/screens/StatsScreen';
-import { palette } from './src/theme/palette';
+import {
+	LearningProvider,
+	LearningScreen,
+	ProgressScreen,
+} from './src/features/learning';
+import { CardsIcon, ChartIcon } from './src/shared/components/icons';
+import { palette } from './src/shared/theme';
 
 export type RootTabParamList = {
 	Learn: undefined;
@@ -129,12 +131,12 @@ export default function App() {
 					})}
 				>
 					<Tab.Screen
-						component={HomeScreen}
+						component={LearningScreen}
 						name="Learn"
 						options={{ title: 'Карточки' }}
 					/>
 					<Tab.Screen
-						component={StatsScreen}
+						component={ProgressScreen}
 						name="Stats"
 						options={{ title: 'Статистика' }}
 					/>
@@ -147,8 +149,8 @@ export default function App() {
 const tabBarStyles = StyleSheet.create({
 	wrap: {
 		position: 'absolute',
-		left: 20,
-		right: 20,
+		left: 16,
+		right: 16,
 		bottom: 14,
 	},
 	bar: {
@@ -159,7 +161,7 @@ const tabBarStyles = StyleSheet.create({
 		backgroundColor: palette.footerPanel,
 		shadowColor: '#000000',
 		shadowOffset: { width: 0, height: 12 },
-		shadowOpacity: 0.18,
+		shadowOpacity: 0.24,
 		shadowRadius: 24,
 		elevation: 0,
 		overflow: 'hidden',
@@ -168,10 +170,11 @@ const tabBarStyles = StyleSheet.create({
 		flex: 1,
 		alignItems: 'center',
 		justifyContent: 'center',
-		paddingVertical: 14,
+		paddingVertical: 12,
+		paddingHorizontal: 14,
 	},
 	itemActive: {
-		backgroundColor: 'rgba(130, 245, 208, 0.08)',
+		backgroundColor: 'rgba(130, 245, 208, 0.05)',
 	},
 	itemActiveLeft: {
 		borderRadius: 24,
@@ -184,13 +187,14 @@ const tabBarStyles = StyleSheet.create({
 		borderBottomLeftRadius: 0,
 	},
 	item__content: {
+		flexDirection: 'row',
 		alignItems: 'center',
 		justifyContent: 'center',
-		gap: 6,
+		gap: 8,
 	},
 	item__label: {
 		color: palette.textMuted,
-		fontSize: 12,
+		fontSize: 13,
 		fontWeight: '700',
 	},
 	item__labelActive: {

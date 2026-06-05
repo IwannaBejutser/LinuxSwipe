@@ -1,0 +1,16 @@
+name: PR Preview
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy PR Preview
+    type: deploy
+
+  comment:
+    needs:
+      - deploy
+    type: github-comment

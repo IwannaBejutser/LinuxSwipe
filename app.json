@@ -16,6 +16,12 @@
     },
     "web": {
       "bundler": "metro"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "355a675d-233a-4885-a028-48b1e17a0afc"
+      }
+    },
+    "owner": "jutser"
   }
 }
