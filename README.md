@@ -184,24 +184,6 @@ npx eas-cli@latest deploy --prod --export-dir dist-prod
 - `deploy-web.yml` выкатывает web-версию из `main`.
 - `pr-preview.yml` создает preview-deployments для pull request.
 
-## Что хранить в Git
-
-Нужно хранить:
-
-- `app.json`, потому что он описывает Expo-приложение.
-- `eas.json`, потому что это конфигурация EAS для проекта.
-- `.eas/workflows/*.yml`, потому что workflow-файлы являются частью deploy-инфраструктуры.
-- Исходный код, ассеты, `public/`, package-файлы и документацию.
-
-Не нужно хранить:
-
-- `node_modules/`
-- `.expo/`
-- `dist/`
-- `dist-prod/`
-- локальные скриншоты и временные browser-профили
-- секреты, токены и приватные service-account файлы
-
 ## Текущий статус
 
 Stage: active product prototype.
