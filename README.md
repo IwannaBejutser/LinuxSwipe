@@ -60,6 +60,8 @@ LinuxSwipe/
         components/
         context/
         data/
+        hooks/
+        lib/
         screens/
         storage/
         types/
@@ -72,6 +74,13 @@ LinuxSwipe/
 ```
 
 Архитектура сейчас ближе к feature-based подходу: все, что относится к обучению, лежит в `src/features/learning`, а переиспользуемые элементы находятся в `src/shared`.
+
+Внутри `src/features/learning` логика разделена по ответственности:
+
+- `components/` — UI-блоки учебного экрана: карточка, фильтры, модалки, toast и action dock.
+- `hooks/` — сценарии поведения: сборка учебной колоды, свайпы, ручной ответ и toast feedback.
+- `lib/` — чистая бизнес-логика: проверка команд, сортировка колоды, XP, статистика, даты и нормализация состояния.
+- `context/` — публичный learning state, reducer и сохранение прогресса.
 
 ## Модель карточки
 
