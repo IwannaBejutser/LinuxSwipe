@@ -171,6 +171,7 @@ export function LearningCard({
               style={[
                 styles.cardFace__questionBlock,
                 isNarrow && styles.cardFace__questionBlockCompact,
+                showSwipeHint && styles.cardFace__questionBlockWithHint,
               ]}
             >
               <Text
@@ -579,6 +580,9 @@ const styles = StyleSheet.create({
     paddingTop: 6,
     paddingBottom: 12,
     gap: 8,
+  },
+  cardFace__questionBlockWithHint: {
+    paddingRight: 76,
   },
   cardFace__eyebrow: {
     color: palette.textMuted,
