@@ -81,7 +81,7 @@ export function LearningScreen() {
   ).length;
   const learnedSwipeCount = Math.max(stats.known + stats.review, sessionSwipeCount);
   const hasOpenOverlay = isFiltersOpen || isAnswerSheetOpen || isDetailsOpen;
-  const shouldShowSwipeHint = learnedSwipeCount < 2 && !hasOpenOverlay;
+  const shouldShowSwipeCoach = learnedSwipeCount < 2 && !hasOpenOverlay;
   const { showToast, toastOpacity, toastState, toastTranslateY } = useToast();
 
   useEffect(() => {
@@ -269,7 +269,7 @@ export function LearningScreen() {
             panHandlers={panResponder.panHandlers}
             sessionIndex={sessionIndex}
             sessionTotal={filteredCards.length}
-            showSwipeHint={shouldShowSwipeHint}
+            showSwipeCoach={shouldShowSwipeCoach}
             successGlow={successGlow}
             swipeOffset={swipeOffset}
             warningGlow={warningGlow}

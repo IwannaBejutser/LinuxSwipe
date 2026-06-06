@@ -9,11 +9,7 @@ import {
   View,
 } from 'react-native';
 
-import {
-  CheckIcon,
-  ReviewIcon,
-  SparkIcon,
-} from '../../../shared/components/icons/AppIcons';
+import { CheckIcon, SparkIcon } from '../../../shared/components/icons/AppIcons';
 import { Card } from '../types/card';
 import { getCategoryLabel } from '../lib/category';
 import { palette } from '../../../shared/theme/palette';
@@ -30,7 +26,7 @@ type LearningCardProps = {
   panHandlers: GestureResponderHandlers;
   sessionIndex: number;
   sessionTotal: number;
-  showSwipeHint?: boolean;
+  showSwipeCoach?: boolean;
   successGlow: Animated.Value;
   swipeOffset: Animated.Value;
   warningGlow: Animated.Value;
@@ -48,7 +44,7 @@ export function LearningCard({
   panHandlers,
   sessionIndex,
   sessionTotal,
-  showSwipeHint = false,
+  showSwipeCoach = false,
   successGlow,
   swipeOffset,
   warningGlow,
@@ -57,6 +53,46 @@ export function LearningCard({
   const isNarrow = isCompact || width < 390;
   const questionFontSize = isNarrow ? 24 : 32;
   const questionLineHeight = isNarrow ? 30 : 38;
+  const coachProgress = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (!showSwipeCoach || isCardFlipped) {
+      coachProgress.stopAnimation();
+      coachProgress.setValue(0);
+      return;
+    }
+
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(coachProgress, {
+          toValue: 1,
+          duration: 760,
+          useNativeDriver: true,
+        }),
+        Animated.timing(coachProgress, {
+          toValue: 0,
+          duration: 420,
+          useNativeDriver: true,
+        }),
+        Animated.timing(coachProgress, {
+          toValue: -1,
+          duration: 760,
+          useNativeDriver: true,
+        }),
+        Animated.timing(coachProgress, {
+          toValue: 0,
+          duration: 420,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+
+    loop.start();
+
+    return () => {
+      loop.stop();
+    };
+  }, [coachProgress, isCardFlipped, showSwipeCoach]);
 
   const swipeUpOpacity = swipeOffset.interpolate({
     inputRange: [-180, -40, 0],
@@ -75,6 +111,14 @@ export function LearningCard({
   const cardScale = swipeOffset.interpolate({
     inputRange: [-180, 0, 180],
     outputRange: [0.988, 1, 0.988],
+  });
+  const coachTranslateY = coachProgress.interpolate({
+    inputRange: [-1, 0, 1],
+    outputRange: [14, 0, -14],
+  });
+  const coachTilt = coachProgress.interpolate({
+    inputRange: [-1, 0, 1],
+    outputRange: ['2deg', '0deg', '-2deg'],
   });
   const frontFaceRotation = flipProgress.interpolate({
     inputRange: [0, 1],
@@ -106,16 +150,15 @@ export function LearningCard({
         </View>
       ) : null}
 
-      {showSwipeHint ? <SwipeHint /> : null}
-
       <Animated.View
         {...panHandlers}
         style={[
           styles.card,
           {
             transform: [
-              { translateY: swipeOffset },
+              { translateY: Animated.add(swipeOffset, coachTranslateY) },
               { rotate: cardRotation },
+              { rotateZ: coachTilt },
               { scale: cardScale },
             ],
           },
@@ -137,6 +180,9 @@ export function LearningCard({
           pointerEvents="none"
           style={[styles.card__swipeAuraBottom, { opacity: swipeDownOpacity }]}
         />
+        {showSwipeCoach && !isCardFlipped ? (
+          <SwipeCoach coachProgress={coachProgress} />
+        ) : null}
 
         <Animated.View
           pointerEvents={isCardFlipped ? 'none' : 'auto'}
@@ -171,7 +217,6 @@ export function LearningCard({
               style={[
                 styles.cardFace__questionBlock,
                 isNarrow && styles.cardFace__questionBlockCompact,
-                showSwipeHint && styles.cardFace__questionBlockWithHint,
               ]}
             >
               <Text
@@ -293,58 +338,53 @@ export function LearningCard({
   );
 }
 
-function SwipeHint() {
-  const hintProgress = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(hintProgress, {
-          toValue: 1,
-          duration: 1150,
-          useNativeDriver: true,
-        }),
-        Animated.timing(hintProgress, {
-          toValue: 0,
-          duration: 1150,
-          useNativeDriver: true,
-        }),
-      ]),
-    );
-
-    loop.start();
-
-    return () => {
-      loop.stop();
-    };
-  }, [hintProgress]);
-
-  const translateY = hintProgress.interpolate({
-    inputRange: [0, 1],
-    outputRange: [7, -7],
+function SwipeCoach({ coachProgress }: { coachProgress: Animated.Value }) {
+  const upOpacity = coachProgress.interpolate({
+    inputRange: [-1, -0.15, 0.25, 1],
+    outputRange: [0, 0, 0.28, 0.9],
+    extrapolate: 'clamp',
   });
-  const opacity = hintProgress.interpolate({
-    inputRange: [0, 0.5, 1],
-    outputRange: [0.52, 0.92, 0.64],
+  const downOpacity = coachProgress.interpolate({
+    inputRange: [-1, -0.25, 0.15, 1],
+    outputRange: [0.9, 0.28, 0, 0],
+    extrapolate: 'clamp',
+  });
+  const upTranslateY = coachProgress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [6, -4],
+    extrapolate: 'clamp',
+  });
+  const downTranslateY = coachProgress.interpolate({
+    inputRange: [-1, 0],
+    outputRange: [4, -6],
+    extrapolate: 'clamp',
   });
 
   return (
-    <Animated.View
-      pointerEvents="none"
-      style={[styles.swipeHint, { opacity, transform: [{ translateY }] }]}
-    >
-      <View style={styles.swipeHint__item}>
-        <CheckIcon color={palette.accentStrong} size={15} />
-        <Text style={styles.swipeHint__direction}>Вверх</Text>
-        <Text style={styles.swipeHint__label}>Знаю</Text>
-      </View>
-      <View style={styles.swipeHint__line} />
-      <View style={styles.swipeHint__item}>
-        <ReviewIcon color="#f4a261" size={15} />
-        <Text style={styles.swipeHint__direction}>Вниз</Text>
-        <Text style={styles.swipeHint__label}>Повтор</Text>
-      </View>
-    </Animated.View>
+    <>
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.swipeCoach,
+          styles.swipeCoachUp,
+          { opacity: upOpacity, transform: [{ translateY: upTranslateY }] },
+        ]}
+      >
+        <Text style={styles.swipeCoach__eyebrow}>Свайп вверх</Text>
+        <Text style={styles.swipeCoach__label}>Знаю команду</Text>
+      </Animated.View>
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.swipeCoach,
+          styles.swipeCoachDown,
+          { opacity: downOpacity, transform: [{ translateY: downTranslateY }] },
+        ]}
+      >
+        <Text style={styles.swipeCoach__eyebrow}>Свайп вниз</Text>
+        <Text style={styles.swipeCoach__label}>Повторить позже</Text>
+      </Animated.View>
+    </>
   );
 }
 
@@ -467,44 +507,40 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     maxWidth: '84%',
   },
-  swipeHint: {
+  swipeCoach: {
     position: 'absolute',
-    right: 8,
-    top: '50%',
-    marginTop: -72,
-    width: 70,
-    borderRadius: 24,
+    left: 22,
+    right: 22,
+    zIndex: 38,
+    elevation: 38,
+    alignItems: 'center',
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: 'rgba(130, 245, 208, 0.2)',
-    backgroundColor: 'rgba(7, 16, 26, 0.84)',
-    paddingHorizontal: 7,
+    backgroundColor: 'rgba(7, 16, 26, 0.76)',
+    paddingHorizontal: 14,
     paddingVertical: 10,
-    gap: 8,
-    zIndex: 34,
-    elevation: 34,
   },
-  swipeHint__item: {
-    alignItems: 'center',
-    gap: 2,
+  swipeCoachUp: {
+    top: 66,
   },
-  swipeHint__direction: {
-    color: palette.textPrimary,
-    fontSize: 8,
+  swipeCoachDown: {
+    bottom: 62,
+    borderColor: 'rgba(244, 162, 97, 0.2)',
+    backgroundColor: 'rgba(28, 18, 12, 0.72)',
+  },
+  swipeCoach__eyebrow: {
+    color: palette.accentStrong,
+    fontSize: 10,
     fontWeight: '900',
-    letterSpacing: 0.35,
+    letterSpacing: 1,
     textTransform: 'uppercase',
   },
-  swipeHint__label: {
-    color: palette.textMuted,
-    fontSize: 9,
+  swipeCoach__label: {
+    marginTop: 2,
+    color: palette.textPrimary,
+    fontSize: 13,
     fontWeight: '800',
-  },
-  swipeHint__line: {
-    alignSelf: 'center',
-    width: 1,
-    height: 18,
-    borderRadius: 999,
-    backgroundColor: 'rgba(130, 245, 208, 0.18)',
   },
   card: {
     flex: 1,
@@ -580,9 +616,6 @@ const styles = StyleSheet.create({
     paddingTop: 6,
     paddingBottom: 12,
     gap: 8,
-  },
-  cardFace__questionBlockWithHint: {
-    paddingRight: 76,
   },
   cardFace__eyebrow: {
     color: palette.textMuted,
