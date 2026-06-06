@@ -4,7 +4,7 @@ import { Animated, Easing, StyleSheet, useWindowDimensions, View } from 'react-n
 import { palette } from '../theme/palette';
 
 export function AnimatedBackdrop() {
-  const { height, width } = useWindowDimensions();
+  const { width } = useWindowDimensions();
   const beamDrift = useRef(new Animated.Value(0)).current;
   const sheetFloat = useRef(new Animated.Value(0)).current;
   const scanlineShift = useRef(new Animated.Value(0)).current;

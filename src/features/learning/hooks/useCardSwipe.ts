@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { Animated, PanResponder } from 'react-native';
 
 import { Card } from '../types/card';
@@ -31,44 +31,47 @@ export function useCardSwipe({
     currentCardRef.current = currentCard;
   }, [currentCard]);
 
-  const resetCardPosition = () => {
+  const resetCardPosition = useCallback(() => {
     Animated.spring(swipeOffset, {
       toValue: 0,
       useNativeDriver: true,
       bounciness: 8,
       speed: 13,
     }).start();
-  };
+  }, [swipeOffset]);
 
-  const completeSwipe = (card: Card, direction: 'up' | 'down') => {
-    if (isCompletingSwipeRef.current) {
-      return;
-    }
+  const completeSwipe = useCallback(
+    (card: Card, direction: 'up' | 'down') => {
+      if (isCompletingSwipeRef.current) {
+        return;
+      }
 
-    isCompletingSwipeRef.current = true;
-    pulseCardFeedback(direction === 'up' ? 'success' : 'warning');
+      isCompletingSwipeRef.current = true;
+      pulseCardFeedback(direction === 'up' ? 'success' : 'warning');
 
-    Animated.timing(swipeOffset, {
-      toValue: direction === 'up' ? -exitDistance : exitDistance,
-      duration: 220,
-      useNativeDriver: true,
-    }).start(() => {
-      const action =
-        direction === 'up' ? markCardKnown(card.id) : markCardForReview(card.id);
+      Animated.timing(swipeOffset, {
+        toValue: direction === 'up' ? -exitDistance : exitDistance,
+        duration: 220,
+        useNativeDriver: true,
+      }).start(() => {
+        const action =
+          direction === 'up' ? markCardKnown(card.id) : markCardForReview(card.id);
 
-      void action.finally(() => {
-        showToast(
-          direction === 'up' ? 'success' : 'warning',
-          direction === 'up' ? '+10 опыта' : 'Добавлено на повтор',
-          direction === 'up'
-            ? 'Карточка ушла в уверенно знакомые.'
-            : 'Команда вернется в поток раньше остальных.',
-        );
-        swipeOffset.setValue(0);
-        isCompletingSwipeRef.current = false;
+        void action.finally(() => {
+          showToast(
+            direction === 'up' ? 'success' : 'warning',
+            direction === 'up' ? '+10 опыта' : 'Добавлено на повтор',
+            direction === 'up'
+              ? 'Карточка ушла в уверенно знакомые.'
+              : 'Команда вернется в поток раньше остальных.',
+          );
+          swipeOffset.setValue(0);
+          isCompletingSwipeRef.current = false;
+        });
       });
-    });
-  };
+    },
+    [markCardForReview, markCardKnown, pulseCardFeedback, showToast, swipeOffset],
+  );
 
   const panResponder = useMemo(
     () =>
@@ -111,7 +114,7 @@ export function useCardSwipe({
         onPanResponderTerminate: resetCardPosition,
         onPanResponderTerminationRequest: () => false,
       }),
-    [swipeOffset],
+    [completeSwipe, resetCardPosition, swipeOffset],
   );
 
   return {
