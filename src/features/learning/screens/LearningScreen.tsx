@@ -79,7 +79,9 @@ export function LearningScreen() {
   const reviewCount = Object.values(progress).filter(
     (value) => value === 'review',
   ).length;
-  const shouldShowSwipeHint = stats.known + stats.review + sessionSwipeCount < 2;
+  const learnedSwipeCount = Math.max(stats.known + stats.review, sessionSwipeCount);
+  const hasOpenOverlay = isFiltersOpen || isAnswerSheetOpen || isDetailsOpen;
+  const shouldShowSwipeHint = learnedSwipeCount < 2 && !hasOpenOverlay;
   const { showToast, toastOpacity, toastState, toastTranslateY } = useToast();
 
   useEffect(() => {
