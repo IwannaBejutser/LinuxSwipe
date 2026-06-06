@@ -70,6 +70,7 @@ export function LearningScreen() {
   const [isAnswerSheetOpen, setIsAnswerSheetOpen] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isCardFlipped, setIsCardFlipped] = useState(false);
+  const [sessionSwipeCount, setSessionSwipeCount] = useState(0);
   const flipProgress = useRef(new Animated.Value(0)).current;
   const swipeOffset = useRef(new Animated.Value(0)).current;
   const successGlow = useRef(new Animated.Value(0)).current;
@@ -78,6 +79,7 @@ export function LearningScreen() {
   const reviewCount = Object.values(progress).filter(
     (value) => value === 'review',
   ).length;
+  const shouldShowSwipeHint = stats.known + stats.review + sessionSwipeCount < 2;
   const { showToast, toastOpacity, toastState, toastTranslateY } = useToast();
 
   useEffect(() => {
@@ -111,10 +113,11 @@ export function LearningScreen() {
       }),
     ]).start();
   };
-  const { completeSwipe, isCompletingSwipeRef, panResponder } = useCardSwipe({
+  const { isCompletingSwipeRef, panResponder } = useCardSwipe({
     currentCard,
     markCardForReview,
     markCardKnown,
+    onSwipeComplete: () => setSessionSwipeCount((value) => value + 1),
     pulseCardFeedback,
     showToast,
     swipeOffset,
@@ -264,6 +267,7 @@ export function LearningScreen() {
             panHandlers={panResponder.panHandlers}
             sessionIndex={sessionIndex}
             sessionTotal={filteredCards.length}
+            showSwipeHint={shouldShowSwipeHint}
             successGlow={successGlow}
             swipeOffset={swipeOffset}
             warningGlow={warningGlow}
@@ -272,8 +276,6 @@ export function LearningScreen() {
           <ActionDock
             isCompact={isDenseViewport}
             onOpenManualAnswer={() => setIsAnswerSheetOpen(true)}
-            onSendKnown={() => completeSwipe(currentCard, 'up')}
-            onSendReview={() => completeSwipe(currentCard, 'down')}
           />
 
           <LearningToast

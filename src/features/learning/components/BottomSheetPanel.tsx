@@ -1,7 +1,9 @@
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useMemo, useRef } from 'react';
 import {
+  Animated,
   KeyboardAvoidingView,
   Modal,
+  PanResponder,
   Platform,
   Pressable,
   StyleSheet,
@@ -23,14 +25,64 @@ export function BottomSheetPanel({
   onClose,
   visible,
 }: BottomSheetPanelProps) {
+  const panelTranslateY = useRef(new Animated.Value(0)).current;
+  const panResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponder: (_, gestureState) =>
+          gestureState.dy > 8 && Math.abs(gestureState.dy) > Math.abs(gestureState.dx),
+        onMoveShouldSetPanResponderCapture: (_, gestureState) =>
+          gestureState.dy > 8 && Math.abs(gestureState.dy) > Math.abs(gestureState.dx),
+        onPanResponderMove: (_, gestureState) => {
+          panelTranslateY.setValue(Math.max(gestureState.dy, 0));
+        },
+        onPanResponderRelease: (_, gestureState) => {
+          if (gestureState.dy > 78 || gestureState.vy > 1.1) {
+            onClose();
+            return;
+          }
+
+          Animated.spring(panelTranslateY, {
+            toValue: 0,
+            useNativeDriver: true,
+            bounciness: 7,
+            speed: 15,
+          }).start();
+        },
+        onPanResponderTerminate: () => {
+          Animated.spring(panelTranslateY, {
+            toValue: 0,
+            useNativeDriver: true,
+            bounciness: 7,
+            speed: 15,
+          }).start();
+        },
+      }),
+    [onClose, panelTranslateY],
+  );
+
+  useEffect(() => {
+    if (visible) {
+      panelTranslateY.setValue(0);
+    }
+  }, [panelTranslateY, visible]);
+
   const content = (
     <>
       <Pressable onPress={onClose} style={styles.sheet__backdrop} />
-      <View style={styles.sheet__host}>
-        <View style={styles.sheet__panel}>
+      <View pointerEvents="box-none" style={styles.sheet__host}>
+        <Animated.View
+          {...panResponder.panHandlers}
+          style={[
+            styles.sheet__panel,
+            {
+              transform: [{ translateY: panelTranslateY }],
+            },
+          ]}
+        >
           <View style={styles.sheet__handle} />
           {children}
-        </View>
+        </Animated.View>
       </View>
     </>
   );

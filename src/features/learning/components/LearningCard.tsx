@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useRef } from 'react';
 import {
   Animated,
   GestureResponderHandlers,
@@ -9,7 +9,11 @@ import {
   View,
 } from 'react-native';
 
-import { CheckIcon, SparkIcon } from '../../../shared/components/icons/AppIcons';
+import {
+  CheckIcon,
+  ReviewIcon,
+  SparkIcon,
+} from '../../../shared/components/icons/AppIcons';
 import { Card } from '../types/card';
 import { getCategoryLabel } from '../lib/category';
 import { palette } from '../../../shared/theme/palette';
@@ -26,6 +30,7 @@ type LearningCardProps = {
   panHandlers: GestureResponderHandlers;
   sessionIndex: number;
   sessionTotal: number;
+  showSwipeHint?: boolean;
   successGlow: Animated.Value;
   swipeOffset: Animated.Value;
   warningGlow: Animated.Value;
@@ -43,6 +48,7 @@ export function LearningCard({
   panHandlers,
   sessionIndex,
   sessionTotal,
+  showSwipeHint = false,
   successGlow,
   swipeOffset,
   warningGlow,
@@ -100,6 +106,8 @@ export function LearningCard({
         </View>
       ) : null}
 
+      {showSwipeHint ? <SwipeHint /> : null}
+
       <Animated.View
         {...panHandlers}
         style={[
@@ -143,19 +151,16 @@ export function LearningCard({
           <Pressable onPress={onToggleFace} style={styles.cardFace__pressable}>
             <View style={styles.cardFace__metaRail}>
               <MetaPill
-                align="flex-start"
                 isCompact={isNarrow}
                 label={getCategoryLabel(currentCard.category)}
                 variant="category"
               />
               <MetaPill
-                align="center"
                 isCompact={isNarrow}
                 label={`${sessionIndex}/${sessionTotal}`}
                 variant="index"
               />
               <MetaPill
-                align="flex-end"
                 isCompact={isNarrow}
                 label={getDifficultyLabel(currentCard.difficulty)}
                 variant="difficulty"
@@ -232,19 +237,16 @@ export function LearningCard({
           <View style={styles.cardFace__pressable}>
             <View style={styles.cardFace__metaRail}>
               <MetaPill
-                align="flex-start"
                 isCompact={isNarrow}
                 label={getCategoryLabel(currentCard.category)}
                 variant="category"
               />
               <MetaPill
-                align="center"
                 isCompact={isNarrow}
                 label={`${sessionIndex}/${sessionTotal}`}
                 variant="index"
               />
               <MetaPill
-                align="flex-end"
                 isCompact={isNarrow}
                 label={getDifficultyLabel(currentCard.difficulty)}
                 variant="difficulty"
@@ -290,13 +292,66 @@ export function LearningCard({
   );
 }
 
+function SwipeHint() {
+  const hintProgress = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(hintProgress, {
+          toValue: 1,
+          duration: 1150,
+          useNativeDriver: true,
+        }),
+        Animated.timing(hintProgress, {
+          toValue: 0,
+          duration: 1150,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+
+    loop.start();
+
+    return () => {
+      loop.stop();
+    };
+  }, [hintProgress]);
+
+  const translateY = hintProgress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [7, -7],
+  });
+  const opacity = hintProgress.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [0.52, 0.92, 0.64],
+  });
+
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[styles.swipeHint, { opacity, transform: [{ translateY }] }]}
+    >
+      <View style={styles.swipeHint__item}>
+        <CheckIcon color={palette.accentStrong} size={15} />
+        <Text style={styles.swipeHint__direction}>Вверх</Text>
+        <Text style={styles.swipeHint__label}>Знаю</Text>
+      </View>
+      <View style={styles.swipeHint__line} />
+      <View style={styles.swipeHint__item}>
+        <ReviewIcon color="#f4a261" size={15} />
+        <Text style={styles.swipeHint__direction}>Вниз</Text>
+        <Text style={styles.swipeHint__label}>Повтор</Text>
+      </View>
+    </Animated.View>
+  );
+}
+
 function MetaPill({
-  align,
   isCompact = false,
   label,
   variant = 'category',
 }: {
-  align: 'center' | 'flex-end' | 'flex-start';
   isCompact?: boolean;
   label: string;
   variant?: 'category' | 'difficulty' | 'index';
@@ -309,7 +364,6 @@ function MetaPill({
         variant === 'index' && styles.metaPillIndex,
         variant === 'difficulty' && styles.metaPillDifficulty,
         isCompact && styles.metaPillCompact,
-        { alignItems: align },
       ]}
     >
       <Text
@@ -411,6 +465,45 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     fontWeight: '700',
     maxWidth: '84%',
+  },
+  swipeHint: {
+    position: 'absolute',
+    right: -6,
+    top: '50%',
+    marginTop: -72,
+    width: 64,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(130, 245, 208, 0.2)',
+    backgroundColor: 'rgba(7, 16, 26, 0.78)',
+    paddingHorizontal: 7,
+    paddingVertical: 10,
+    gap: 8,
+    zIndex: 34,
+    elevation: 34,
+  },
+  swipeHint__item: {
+    alignItems: 'center',
+    gap: 2,
+  },
+  swipeHint__direction: {
+    color: palette.textPrimary,
+    fontSize: 9,
+    fontWeight: '900',
+    letterSpacing: 0.45,
+    textTransform: 'uppercase',
+  },
+  swipeHint__label: {
+    color: palette.textMuted,
+    fontSize: 9,
+    fontWeight: '800',
+  },
+  swipeHint__line: {
+    alignSelf: 'center',
+    width: 1,
+    height: 18,
+    borderRadius: 999,
+    backgroundColor: 'rgba(130, 245, 208, 0.18)',
   },
   card: {
     flex: 1,
@@ -599,6 +692,8 @@ const styles = StyleSheet.create({
   },
   metaPill: {
     minWidth: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 8,
@@ -623,6 +718,7 @@ const styles = StyleSheet.create({
     color: palette.textSecondary,
     fontSize: 11,
     fontWeight: '700',
+    textAlign: 'center',
   },
   metaPill__textCompact: {
     fontSize: 10,

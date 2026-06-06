@@ -8,6 +8,7 @@ type UseCardSwipeParams = {
   currentCard: Card | null;
   markCardForReview: (cardId: string, source?: 'swipe' | 'manual') => Promise<void>;
   markCardKnown: (cardId: string, source?: 'swipe' | 'manual') => Promise<void>;
+  onSwipeComplete?: () => void;
   pulseCardFeedback: (tone: FeedbackTone) => void;
   showToast: (tone: FeedbackTone, title: string, body: string) => void;
   swipeOffset: Animated.Value;
@@ -20,6 +21,7 @@ export function useCardSwipe({
   currentCard,
   markCardForReview,
   markCardKnown,
+  onSwipeComplete,
   pulseCardFeedback,
   showToast,
   swipeOffset,
@@ -67,10 +69,18 @@ export function useCardSwipe({
           );
           swipeOffset.setValue(0);
           isCompletingSwipeRef.current = false;
+          onSwipeComplete?.();
         });
       });
     },
-    [markCardForReview, markCardKnown, pulseCardFeedback, showToast, swipeOffset],
+    [
+      markCardForReview,
+      markCardKnown,
+      onSwipeComplete,
+      pulseCardFeedback,
+      showToast,
+      swipeOffset,
+    ],
   );
 
   const panResponder = useMemo(
