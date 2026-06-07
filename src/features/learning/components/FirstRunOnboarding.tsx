@@ -80,8 +80,8 @@ export function FirstRunOnboarding({ onComplete, visible }: FirstRunOnboardingPr
         <Text style={styles.onboarding__eyebrow}>Быстрый старт</Text>
         <Text style={styles.onboarding__title}>Карточки отвечают на жесты</Text>
         <Text style={styles.onboarding__body}>
-          Тап открывает ответ. Свайп вверх засчитывает знание, свайп вниз отправляет
-          команду на повтор.
+          Тап открывает ручную проверку. Свайп вверх засчитывает знание, свайп вниз
+          отправляет команду на повтор.
         </Text>
 
         <View style={styles.demo}>
@@ -125,7 +125,8 @@ export function FirstRunOnboarding({ onComplete, visible }: FirstRunOnboardingPr
         <View style={styles.onboarding__tip}>
           <KeyboardIcon color={palette.accentStrong} size={18} />
           <Text style={styles.onboarding__tipText}>
-            Когда захотите проверить синтаксис, откройте режим ручного ответа.
+            Ручной ответ помогает закрепить синтаксис, а свайпы остаются быстрым способом
+            оценить карточку.
           </Text>
         </View>
 

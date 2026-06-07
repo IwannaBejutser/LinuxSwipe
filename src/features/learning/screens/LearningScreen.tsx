@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 
-import { ActionDock, TrainingMode } from '../components/ActionDock';
 import { CardDetailsModal } from '../components/CardDetailsModal';
 import { FirstRunOnboarding } from '../components/FirstRunOnboarding';
 import { FilterSheet } from '../components/FilterSheet';
@@ -80,7 +79,6 @@ export function LearningScreen() {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isCardFlipped, setIsCardFlipped] = useState(false);
   const [showFirstRunOnboarding, setShowFirstRunOnboarding] = useState(false);
-  const [trainingMode, setTrainingMode] = useState<TrainingMode>('swipe');
   const flipProgress = useRef(new Animated.Value(0)).current;
   const swipeOffset = useRef(new Animated.Value(0)).current;
   const successGlow = useRef(new Animated.Value(0)).current;
@@ -167,12 +165,7 @@ export function LearningScreen() {
   };
 
   const handleCardPrimaryAction = () => {
-    if (trainingMode === 'manual') {
-      setIsAnswerSheetOpen(true);
-      return;
-    }
-
-    setCardFace(!isCardFlippedRef.current);
+    setIsAnswerSheetOpen(true);
   };
 
   const {
@@ -315,18 +308,6 @@ export function LearningScreen() {
             successGlow={successGlow}
             swipeOffset={swipeOffset}
             warningGlow={warningGlow}
-          />
-
-          <ActionDock
-            isCompact={isDenseViewport}
-            mode={trainingMode}
-            onSelectMode={(mode) => {
-              setTrainingMode(mode);
-
-              if (mode === 'manual') {
-                setIsAnswerSheetOpen(true);
-              }
-            }}
           />
 
           <LearningToast

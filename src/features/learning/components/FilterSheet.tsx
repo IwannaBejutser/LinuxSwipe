@@ -115,7 +115,7 @@ export function FilterSheet({
       <Pressable onPress={onResetOnboarding} style={styles.sheet__resetLearning}>
         <Text style={styles.sheet__resetLearningTitle}>Показать обучение снова</Text>
         <Text style={styles.sheet__resetLearningBody}>
-          Откроет короткую демо-карточку со свайпами и ручным режимом.
+          Откроет короткую демо-карточку со свайпами и ручной проверкой.
         </Text>
       </Pressable>
 
