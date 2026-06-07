@@ -7,7 +7,8 @@ import {
   useState,
 } from 'react';
 
-import { cards } from '../data/learningCards';
+import { loadLearningCards } from '../data/cardRepository';
+import { cards as localCards } from '../data/learningCards';
 import { buildInitialState, sanitizeState } from '../lib/learningState';
 import { buildStats } from '../lib/learningStats';
 import { MarkSource } from '../lib/xp';
@@ -32,6 +33,7 @@ const LearningContext = createContext<LearningContextValue | undefined>(undefine
 
 export function LearningProvider({ children }: PropsWithChildren) {
   const [state, setState] = useState<LearningState>(buildInitialState);
+  const [cards, setCards] = useState<Card[]>(localCards);
   const [isHydrated, setIsHydrated] = useState(false);
   const stateRef = useRef<LearningState>(buildInitialState());
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
@@ -44,10 +46,14 @@ export function LearningProvider({ children }: PropsWithChildren) {
     let isMounted = true;
 
     const hydrate = async () => {
-      const storedState = await loadLearningState();
+      const [storedState, loadedCards] = await Promise.all([
+        loadLearningState(),
+        loadLearningCards(),
+      ]);
       const nextState = sanitizeState(storedState);
 
       if (isMounted) {
+        setCards(loadedCards);
         stateRef.current = nextState;
         setState(nextState);
         setIsHydrated(true);

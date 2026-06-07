@@ -123,6 +123,29 @@ npm run content:seed:supabase
 
 Когда появится Supabase-клиент, лучше не переписывать UI под БД напрямую. Достаточно заменить адаптер получения карточек: `cards.json -> Supabase rows -> Card[]`. Тогда текущая валидация, matcher, статистика и deck builder останутся рабочими.
 
+### Подключение Supabase
+
+Клиент Supabase находится в `src/shared/api/supabase.ts`. Карточки загружаются через `src/features/learning/data/cardRepository.ts`: сначала приложение пробует таблицу `cards`, а если Supabase недоступен, таблица пустая или данные не проходят validation, используется локальный `cards.json`.
+
+Локальные переменные окружения:
+
+```bash
+EXPO_PUBLIC_SUPABASE_URL=...
+EXPO_PUBLIC_SUPABASE_KEY=...
+```
+
+Шаблон лежит в `.env.example`. Локальный `.env.local` не хранится в Git.
+
+Первичная настройка таблицы:
+
+```sql
+-- Выполнить в Supabase SQL editor
+supabase/cards.schema.sql
+supabase/cards.seed.sql
+```
+
+`cards.schema.sql` включает RLS и public read-only policy для активных карточек. `cards.seed.sql` делает upsert 100 текущих карточек и сохраняет порядок через `sort_order`.
+
 ## Модель карточки
 
 ```ts

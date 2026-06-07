@@ -17,6 +17,16 @@ create table if not exists public.cards (
 create index if not exists cards_category_idx on public.cards (category);
 create index if not exists cards_difficulty_idx on public.cards (difficulty);
 create index if not exists cards_is_active_idx on public.cards (is_active);
+create index if not exists cards_sort_order_idx on public.cards (sort_order);
+
+alter table public.cards enable row level security;
+
+drop policy if exists "Active cards are publicly readable" on public.cards;
+
+create policy "Active cards are publicly readable"
+  on public.cards
+  for select
+  using (is_active = true);
 
 comment on table public.cards is
   'LinuxSwipe learning cards. The local cards.json file is the current content source and can be exported into this table.';

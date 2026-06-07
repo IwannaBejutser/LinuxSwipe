@@ -24,7 +24,7 @@ function toSqlTextArray(values = []) {
   return `ARRAY[${values.map(toSqlString).join(', ')}]::text[]`;
 }
 
-function toRow(card) {
+function toRow(card, index) {
   return [
     toSqlString(card.id),
     toSqlString(card.command),
@@ -35,6 +35,7 @@ function toRow(card) {
     toSqlString(card.example),
     toSqlString(card.category),
     toSqlString(card.difficulty),
+    String(index + 1),
   ].join(', ');
 }
 
@@ -45,7 +46,7 @@ if (!Array.isArray(cards)) {
   throw new Error('cards.json must contain an array.');
 }
 
-const rows = cards.map((card) => `  (${toRow(card)})`).join(',\n');
+const rows = cards.map((card, index) => `  (${toRow(card, index)})`).join(',\n');
 const content = `-- Generated from src/features/learning/data/cards.json.
 -- Regenerate with: npm run content:seed:supabase
 
@@ -58,7 +59,8 @@ insert into public.cards (
   accepted_answers,
   example,
   category,
-  difficulty
+  difficulty,
+  sort_order
 )
 values
 ${rows}
@@ -71,6 +73,7 @@ on conflict (id) do update set
   example = excluded.example,
   category = excluded.category,
   difficulty = excluded.difficulty,
+  sort_order = excluded.sort_order,
   updated_at = now();
 `;
 
