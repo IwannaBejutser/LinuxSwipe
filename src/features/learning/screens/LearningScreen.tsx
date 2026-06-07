@@ -73,16 +73,11 @@ export function LearningScreen() {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isCardFlipped, setIsCardFlipped] = useState(false);
   const [showFirstRunOnboarding, setShowFirstRunOnboarding] = useState(false);
-  const [sessionSwipeCount, setSessionSwipeCount] = useState(0);
   const flipProgress = useRef(new Animated.Value(0)).current;
   const swipeOffset = useRef(new Animated.Value(0)).current;
   const successGlow = useRef(new Animated.Value(0)).current;
   const warningGlow = useRef(new Animated.Value(0)).current;
   const isCardFlippedRef = useRef(false);
-  const learnedSwipeCount = Math.max(stats.known + stats.review, sessionSwipeCount);
-  const hasOpenOverlay =
-    isFiltersOpen || isAnswerSheetOpen || isDetailsOpen || showFirstRunOnboarding;
-  const shouldShowSwipeCoach = learnedSwipeCount < 2 && !hasOpenOverlay;
   const { showToast, toastOpacity, toastState, toastTranslateY } = useToast();
 
   useEffect(() => {
@@ -142,7 +137,6 @@ export function LearningScreen() {
     currentCard,
     markCardForReview,
     markCardKnown,
-    onSwipeComplete: () => setSessionSwipeCount((value) => value + 1),
     pulseCardFeedback,
     showToast,
     swipeOffset,
@@ -294,7 +288,6 @@ export function LearningScreen() {
             panHandlers={panResponder.panHandlers}
             sessionIndex={sessionIndex}
             sessionTotal={filteredCards.length}
-            showSwipeCoach={shouldShowSwipeCoach}
             successGlow={successGlow}
             swipeOffset={swipeOffset}
             warningGlow={warningGlow}
