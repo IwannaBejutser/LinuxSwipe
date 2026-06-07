@@ -102,8 +102,14 @@ function hasSameBaseCommand(left: string, right: string) {
   return getCommandName(left) === getCommandName(right);
 }
 
+function canonicalToken(value: string) {
+  return value.replace(/^(['"])(.*)\1$/, '$2');
+}
+
 function uniqueMissingTokens(expectedTokens: string[], actualTokens: string[]) {
-  return expectedTokens.filter((token) => !actualTokens.includes(token));
+  const actualSet = new Set(actualTokens.map(canonicalToken));
+
+  return expectedTokens.filter((token) => !actualSet.has(canonicalToken(token)));
 }
 
 function levenshteinDistance(left: string, right: string) {
@@ -281,7 +287,11 @@ export function evaluateManualAnswer(card: Card, value: string): ManualAnswerRes
     answerPositionals.length > 0 &&
     inputPositionals.length > 0 &&
     flagsAreCompatible &&
-    inputPositionals.some((token) => !answerPositionals.includes(token));
+    inputPositionals.some((token) => {
+      const expectedSet = new Set(answerPositionals.map(canonicalToken));
+
+      return !expectedSet.has(canonicalToken(token));
+    });
 
   if (hasWrongPath) {
     const expectedPositionals = uniqueMissingTokens(answerPositionals, inputPositionals);
@@ -292,7 +302,7 @@ export function evaluateManualAnswer(card: Card, value: string): ManualAnswerRes
       kind: 'wrong-path',
       suggestion: {
         correction: normalizedAnswer,
-        expected: formatTokens(answerPositionals),
+        expected: formatTokens(expectedPositionals),
         reason: 'Оставьте команду и флаги, но замените путь, файл или шаблон.',
         title: 'Не тот путь или аргумент',
       },
