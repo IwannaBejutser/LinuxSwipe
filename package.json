@@ -12,6 +12,7 @@
     "format:check": "prettier --check .",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
+    "content:seed:supabase": "node scripts/export-supabase-cards.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

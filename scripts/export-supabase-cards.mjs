@@ -1,0 +1,80 @@
+/* global console */
+
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const cardsPath = resolve(rootDir, 'src/features/learning/data/cards.json');
+const outputPath = resolve(rootDir, 'supabase/cards.seed.sql');
+
+function escapeSqlString(value) {
+  return String(value).replace(/'/g, "''");
+}
+
+function toSqlString(value) {
+  return `'${escapeSqlString(value)}'`;
+}
+
+function toSqlTextArray(values = []) {
+  if (!values.length) {
+    return 'ARRAY[]::text[]';
+  }
+
+  return `ARRAY[${values.map(toSqlString).join(', ')}]::text[]`;
+}
+
+function toRow(card) {
+  return [
+    toSqlString(card.id),
+    toSqlString(card.command),
+    toSqlString(card.question),
+    toSqlString(card.hint),
+    toSqlString(card.answer),
+    toSqlTextArray(card.acceptedAnswers),
+    toSqlString(card.example),
+    toSqlString(card.category),
+    toSqlString(card.difficulty),
+  ].join(', ');
+}
+
+const rawCards = await readFile(cardsPath, 'utf8');
+const cards = JSON.parse(rawCards);
+
+if (!Array.isArray(cards)) {
+  throw new Error('cards.json must contain an array.');
+}
+
+const rows = cards.map((card) => `  (${toRow(card)})`).join(',\n');
+const content = `-- Generated from src/features/learning/data/cards.json.
+-- Regenerate with: npm run content:seed:supabase
+
+insert into public.cards (
+  id,
+  command,
+  question,
+  hint,
+  answer,
+  accepted_answers,
+  example,
+  category,
+  difficulty
+)
+values
+${rows}
+on conflict (id) do update set
+  command = excluded.command,
+  question = excluded.question,
+  hint = excluded.hint,
+  answer = excluded.answer,
+  accepted_answers = excluded.accepted_answers,
+  example = excluded.example,
+  category = excluded.category,
+  difficulty = excluded.difficulty,
+  updated_at = now();
+`;
+
+await mkdir(dirname(outputPath), { recursive: true });
+await writeFile(outputPath, content, 'utf8');
+
+console.log(`Exported ${cards.length} cards to ${outputPath}`);

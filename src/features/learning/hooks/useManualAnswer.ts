@@ -1,11 +1,12 @@
 import { useState } from 'react';
 
-import { evaluateManualAnswer } from '../lib/commandMatcher';
+import { ManualAnswerResult, evaluateManualAnswer } from '../lib/commandMatcher';
 import { Card } from '../types/card';
 import { FeedbackTone } from './useToast';
 
 type ManualFeedback = {
   body: string;
+  suggestion?: ManualAnswerResult['suggestion'];
   title: string;
   tone: FeedbackTone;
 } | null;
@@ -58,6 +59,7 @@ export function useManualAnswer({
     if (result.correct) {
       setManualFeedback({
         body: result.body,
+        suggestion: result.suggestion,
         title: result.title,
         tone: 'success',
       });
@@ -74,6 +76,7 @@ export function useManualAnswer({
 
     setManualFeedback({
       body: result.body,
+      suggestion: result.suggestion,
       title: result.title,
       tone: 'warning',
     });

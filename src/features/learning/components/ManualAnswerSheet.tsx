@@ -6,12 +6,14 @@ import {
   ReviewIcon,
 } from '../../../shared/components/icons/AppIcons';
 import { palette } from '../../../shared/theme/palette';
+import { ManualAnswerResult } from '../lib/commandMatcher';
 import { FeedbackTone } from '../hooks/useToast';
 import { Card } from '../types/card';
 import { BottomSheetPanel } from './BottomSheetPanel';
 
 type ManualFeedback = {
   body: string;
+  suggestion?: ManualAnswerResult['suggestion'];
   title: string;
   tone: FeedbackTone;
 } | null;
@@ -88,6 +90,33 @@ export function ManualAnswerSheet({
             <Text style={styles.feedback__title}>{manualFeedback.title}</Text>
           </View>
           <Text style={styles.feedback__body}>{manualFeedback.body}</Text>
+
+          {manualFeedback.suggestion ? (
+            <View style={styles.feedback__suggestion}>
+              <Text style={styles.feedback__suggestionTitle}>
+                {manualFeedback.suggestion.title}
+              </Text>
+              <Text style={styles.feedback__suggestionText}>
+                {manualFeedback.suggestion.reason}
+              </Text>
+              {manualFeedback.suggestion.expected ? (
+                <View style={styles.feedback__codeRow}>
+                  <Text style={styles.feedback__codeLabel}>Ожидалось</Text>
+                  <Text style={styles.feedback__codeValue}>
+                    {manualFeedback.suggestion.expected}
+                  </Text>
+                </View>
+              ) : null}
+              {manualFeedback.suggestion.correction ? (
+                <View style={styles.feedback__codeRow}>
+                  <Text style={styles.feedback__codeLabel}>Исправить на</Text>
+                  <Text style={styles.feedback__codeValue}>
+                    {manualFeedback.suggestion.correction}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+          ) : null}
         </View>
       ) : null}
 
@@ -204,6 +233,41 @@ const styles = StyleSheet.create({
     color: palette.textSecondary,
     fontSize: 13,
     lineHeight: 20,
+  },
+  feedback__suggestion: {
+    marginTop: 4,
+    gap: 8,
+    padding: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: 'rgba(1, 2, 3, 0.22)',
+  },
+  feedback__suggestionTitle: {
+    color: palette.textPrimary,
+    fontSize: 13,
+    fontWeight: '900',
+  },
+  feedback__suggestionText: {
+    color: palette.textSecondary,
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  feedback__codeRow: {
+    gap: 4,
+  },
+  feedback__codeLabel: {
+    color: palette.textMuted,
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+  },
+  feedback__codeValue: {
+    color: palette.textPrimary,
+    fontSize: 13,
+    fontWeight: '800',
+    lineHeight: 18,
   },
   sheet__actions: {
     flexDirection: 'row',
