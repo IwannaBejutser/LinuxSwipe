@@ -28,9 +28,28 @@ export function LearningSessionStrip({
   return (
     <View style={[styles.session, isCompact && styles.sessionCompact]}>
       <View style={styles.session__head}>
-        <Text style={[styles.session__lead, isCompact && styles.session__leadCompact]}>
-          {remainingCount} в очереди сейчас
-        </Text>
+        <View style={styles.session__copy}>
+          <Text style={[styles.session__lead, isCompact && styles.session__leadCompact]}>
+            {remainingCount} в очереди
+          </Text>
+          <View style={styles.session__metrics}>
+            <InlineMetric
+              icon={<BoltIcon color={palette.accentStrong} size={13} />}
+              label="Опыт"
+              value={xp}
+            />
+            <InlineMetric
+              icon={<SparkIcon color={palette.accentStrong} size={13} />}
+              label="Серия"
+              value={streak}
+            />
+            <InlineMetric
+              icon={<ReviewIcon color="#f4a261" size={13} />}
+              label="Повтор"
+              value={reviewCount}
+            />
+          </View>
+        </View>
         <Text style={[styles.session__value, isCompact && styles.session__valueCompact]}>
           {Math.round(progressRatio * 100)}%
         </Text>
@@ -44,55 +63,24 @@ export function LearningSessionStrip({
           ]}
         />
       </View>
-
-      <View
-        style={[styles.session__metrics, isCompact && styles.session__metricsCompact]}
-      >
-        <SessionMetric
-          icon={<BoltIcon color={palette.accentStrong} size={15} />}
-          isCompact={isCompact}
-          label="Опыт"
-          value={xp}
-        />
-        <SessionMetric
-          icon={<SparkIcon color={palette.accentStrong} size={15} />}
-          isCompact={isCompact}
-          label="Серия"
-          value={streak}
-        />
-        <SessionMetric
-          icon={<ReviewIcon color="#f4a261" size={15} />}
-          isCompact={isCompact}
-          label="Повтор"
-          value={reviewCount}
-        />
-      </View>
     </View>
   );
 }
 
-function SessionMetric({
+function InlineMetric({
   icon,
-  isCompact = false,
   label,
   value,
 }: {
   icon: ReactNode;
-  isCompact?: boolean;
   label: string;
   value: number;
 }) {
   return (
-    <View style={[styles.metric, isCompact && styles.metricCompact]}>
-      <View style={styles.metric__head}>
-        {icon}
-        <Text style={[styles.metric__label, isCompact && styles.metric__labelCompact]}>
-          {label}
-        </Text>
-      </View>
-      <Text style={[styles.metric__value, isCompact && styles.metric__valueCompact]}>
-        {value}
-      </Text>
+    <View style={styles.metric}>
+      {icon}
+      <Text style={styles.metric__label}>{label}</Text>
+      <Text style={styles.metric__value}>{value}</Text>
     </View>
   );
 }
@@ -101,23 +89,27 @@ const styles = StyleSheet.create({
   session: {
     alignSelf: 'stretch',
     paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderRadius: 20,
+    paddingVertical: 11,
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: palette.border,
-    backgroundColor: palette.overlayPill,
-    gap: 10,
+    borderColor: palette.hairline,
+    backgroundColor: 'rgba(7, 10, 14, 0.66)',
+    gap: 9,
   },
   sessionCompact: {
     paddingHorizontal: 12,
-    paddingVertical: 10,
-    gap: 8,
+    paddingVertical: 9,
+    gap: 7,
   },
   session__head: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
     gap: 12,
+  },
+  session__copy: {
+    flex: 1,
+    gap: 7,
   },
   session__lead: {
     color: palette.textPrimary,
@@ -136,7 +128,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
   },
   session__track: {
-    height: 7,
+    height: 6,
     borderRadius: 999,
     overflow: 'hidden',
     backgroundColor: palette.track,
@@ -148,45 +140,23 @@ const styles = StyleSheet.create({
   },
   session__metrics: {
     flexDirection: 'row',
-    gap: 8,
-  },
-  session__metricsCompact: {
-    gap: 6,
+    flexWrap: 'wrap',
+    gap: 7,
   },
   metric: {
-    flex: 1,
-    paddingHorizontal: 10,
-    paddingVertical: 10,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(79, 111, 155, 0.18)',
-    backgroundColor: 'rgba(9, 18, 34, 0.52)',
-    gap: 4,
-  },
-  metricCompact: {
-    paddingHorizontal: 9,
-    paddingVertical: 9,
-    borderRadius: 13,
-  },
-  metric__head: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 4,
+    opacity: 0.84,
   },
   metric__label: {
     color: palette.textMuted,
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  metric__labelCompact: {
     fontSize: 9,
+    fontWeight: '700',
   },
   metric__value: {
     color: palette.textPrimary,
-    fontSize: 15,
+    fontSize: 10,
     fontWeight: '800',
-  },
-  metric__valueCompact: {
-    fontSize: 14,
   },
 });

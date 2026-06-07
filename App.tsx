@@ -1,13 +1,12 @@
 import 'react-native-gesture-handler';
 
-import { PlatformPressable } from '@react-navigation/elements';
 import { DefaultTheme, NavigationContainer } from '@react-navigation/native';
 import {
   BottomTabBarProps,
   createBottomTabNavigator,
 } from '@react-navigation/bottom-tabs';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import {
   LearningProvider,
@@ -73,7 +72,7 @@ function AppTabBar({ descriptors, navigation, state }: BottomTabBarProps) {
           };
 
           return (
-            <PlatformPressable
+            <Pressable
               key={route.key}
               accessibilityLabel={options.tabBarAccessibilityLabel}
               accessibilityRole="tab"
@@ -101,7 +100,7 @@ function AppTabBar({ descriptors, navigation, state }: BottomTabBarProps) {
                   {label}
                 </Text>
               </View>
-            </PlatformPressable>
+            </Pressable>
           );
         })}
       </View>
@@ -156,9 +155,9 @@ const tabBarStyles = StyleSheet.create({
   bar: {
     flexDirection: 'row',
     borderWidth: 1,
-    borderColor: palette.border,
+    borderColor: palette.hairline,
     borderRadius: 24,
-    backgroundColor: palette.footerPanel,
+    backgroundColor: 'rgba(4, 5, 7, 0.94)',
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.24,
@@ -174,7 +173,7 @@ const tabBarStyles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   itemActive: {
-    backgroundColor: 'rgba(130, 245, 208, 0.05)',
+    backgroundColor: 'rgba(130, 245, 208, 0.045)',
   },
   itemActiveLeft: {
     borderRadius: 24,

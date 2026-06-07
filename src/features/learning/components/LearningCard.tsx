@@ -253,9 +253,6 @@ export function LearningCard({
                 >
                   {deckLabel}
                 </Text>
-                {!isNarrow ? (
-                  <Text style={styles.cardFace__footerMeta}>Карточка в фокусе</Text>
-                ) : null}
               </View>
               <View style={styles.cardFace__footerTrack}>
                 <View
@@ -479,8 +476,8 @@ const styles = StyleSheet.create({
     bottom: 22,
     borderRadius: 32,
     borderWidth: 1,
-    borderColor: 'rgba(92, 117, 159, 0.24)',
-    backgroundColor: 'rgba(18, 29, 49, 0.54)',
+    borderColor: 'rgba(92, 117, 159, 0.14)',
+    backgroundColor: 'rgba(18, 29, 49, 0.34)',
     padding: 24,
   },
   cardStage__queueGlow: {
@@ -547,12 +544,12 @@ const styles = StyleSheet.create({
     position: 'relative',
     borderRadius: 34,
     borderWidth: 1,
-    borderColor: palette.border,
+    borderColor: 'rgba(92, 117, 159, 0.18)',
     backgroundColor: palette.panelElevated,
     overflow: 'hidden',
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 18 },
-    shadowOpacity: 0.28,
+    shadowOpacity: 0.2,
     shadowRadius: 30,
     elevation: 24,
     zIndex: 24,
@@ -589,7 +586,7 @@ const styles = StyleSheet.create({
   },
   cardFace: {
     ...StyleSheet.absoluteFillObject,
-    padding: 20,
+    padding: 21,
     backfaceVisibility: 'hidden',
   },
   cardFaceBack: {
@@ -603,14 +600,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 8,
+    gap: 9,
   },
   cardFace__questionBlock: {
     flex: 1,
     justifyContent: 'center',
     paddingTop: 10,
     paddingBottom: 16,
-    gap: 10,
+    gap: 12,
   },
   cardFace__questionBlockCompact: {
     paddingTop: 6,
@@ -637,7 +634,7 @@ const styles = StyleSheet.create({
     maxWidth: '100%',
   },
   cardFace__footer: {
-    gap: 10,
+    gap: 8,
     paddingTop: 14,
   },
   cardFace__footerCompact: {
@@ -647,32 +644,26 @@ const styles = StyleSheet.create({
   cardFace__footerHead: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
+    justifyContent: 'flex-start',
   },
   cardFace__footerTitle: {
-    color: palette.textPrimary,
-    fontSize: 13,
+    color: palette.textSecondary,
+    fontSize: 12,
     fontWeight: '800',
   },
   cardFace__footerTitleCompact: {
     fontSize: 12,
   },
-  cardFace__footerMeta: {
-    color: palette.textMuted,
-    fontSize: 11,
-    fontWeight: '700',
-  },
   cardFace__footerTrack: {
-    height: 9,
+    height: 7,
     borderRadius: 999,
     overflow: 'hidden',
-    backgroundColor: 'rgba(10, 20, 37, 0.6)',
+    backgroundColor: 'rgba(10, 20, 37, 0.44)',
   },
   cardFace__footerFill: {
     height: '100%',
     borderRadius: 999,
-    backgroundColor: 'rgba(130, 245, 208, 0.22)',
+    backgroundColor: 'rgba(130, 245, 208, 0.28)',
   },
   cardFaceBack__detailsWrap: {
     marginTop: 'auto',
@@ -735,8 +726,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderWidth: 1,
-    borderColor: palette.border,
-    backgroundColor: palette.overlayPill,
+    borderColor: 'rgba(158, 184, 214, 0.1)',
+    backgroundColor: 'rgba(7, 10, 14, 0.62)',
   },
   metaPillCategory: {
     flex: 1.35,

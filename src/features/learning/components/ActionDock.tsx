@@ -66,15 +66,15 @@ const styles = StyleSheet.create({
     position: 'relative',
     zIndex: 2,
     elevation: 2,
-    padding: 10,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: palette.border,
-    backgroundColor: 'rgba(9, 18, 34, 0.58)',
-  },
-  dockCompact: {
     padding: 8,
     borderRadius: 22,
+    borderWidth: 1,
+    borderColor: palette.hairline,
+    backgroundColor: 'rgba(7, 10, 14, 0.56)',
+  },
+  dockCompact: {
+    padding: 7,
+    borderRadius: 20,
   },
   dock__challenge: {
     flexDirection: 'row',
@@ -85,8 +85,8 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: palette.border,
-    backgroundColor: palette.overlayPill,
+    borderColor: 'rgba(158, 184, 214, 0.1)',
+    backgroundColor: 'rgba(7, 10, 14, 0.72)',
   },
   dock__challengeCompact: {
     paddingHorizontal: 12,
