@@ -9,7 +9,11 @@ import {
   View,
 } from 'react-native';
 
-import { CheckIcon, SparkIcon } from '../../../shared/components/icons/AppIcons';
+import {
+  CheckIcon,
+  KeyboardIcon,
+  SparkIcon,
+} from '../../../shared/components/icons/AppIcons';
 import { Card } from '../types/card';
 import { getCategoryLabel } from '../lib/category';
 import { palette } from '../../../shared/theme/palette';
@@ -21,8 +25,8 @@ type LearningCardProps = {
   isCompact?: boolean;
   isCardFlipped: boolean;
   nextCard: Card | null;
+  onOpenManualAnswer?: () => void;
   onOpenDetails: () => void;
-  onPressFront?: () => void;
   onToggleFace: () => void;
   panHandlers: GestureResponderHandlers;
   sessionIndex: number;
@@ -40,8 +44,8 @@ export function LearningCard({
   isCompact = false,
   isCardFlipped,
   nextCard,
+  onOpenManualAnswer,
   onOpenDetails,
-  onPressFront,
   onToggleFace,
   panHandlers,
   sessionIndex,
@@ -196,10 +200,7 @@ export function LearningCard({
             },
           ]}
         >
-          <Pressable
-            onPress={onPressFront ?? onToggleFace}
-            style={styles.cardFace__pressable}
-          >
+          <View style={styles.cardFace__pressable}>
             <View style={styles.cardFace__metaRail}>
               <MetaPill
                 isCompact={isNarrow}
@@ -218,7 +219,8 @@ export function LearningCard({
               />
             </View>
 
-            <View
+            <Pressable
+              onPress={onToggleFace}
               style={[
                 styles.cardFace__questionBlock,
                 isNarrow && styles.cardFace__questionBlockCompact,
@@ -241,7 +243,7 @@ export function LearningCard({
               >
                 {currentCard.question}
               </Text>
-            </View>
+            </Pressable>
 
             <View
               style={[
@@ -258,6 +260,18 @@ export function LearningCard({
                 >
                   {deckLabel}
                 </Text>
+                {onOpenManualAnswer ? (
+                  <Pressable
+                    onPress={onOpenManualAnswer}
+                    style={({ pressed }) => [
+                      styles.cardFace__manualButton,
+                      pressed && styles.cardFace__manualButtonPressed,
+                    ]}
+                  >
+                    <KeyboardIcon color={palette.accentStrong} size={15} />
+                    <Text style={styles.cardFace__manualButtonText}>Ответ руками</Text>
+                  </Pressable>
+                ) : null}
               </View>
               <View style={styles.cardFace__footerTrack}>
                 <View
@@ -268,7 +282,7 @@ export function LearningCard({
                 />
               </View>
             </View>
-          </Pressable>
+          </View>
         </Animated.View>
 
         <Animated.View
@@ -656,7 +670,8 @@ const styles = StyleSheet.create({
   cardFace__footerHead: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 10,
   },
   cardFace__footerTitle: {
     color: palette.textSecondary,
@@ -665,6 +680,25 @@ const styles = StyleSheet.create({
   },
   cardFace__footerTitleCompact: {
     fontSize: 12,
+  },
+  cardFace__manualButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(130, 245, 208, 0.2)',
+    backgroundColor: 'rgba(130, 245, 208, 0.06)',
+  },
+  cardFace__manualButtonPressed: {
+    opacity: 0.86,
+  },
+  cardFace__manualButtonText: {
+    color: palette.textPrimary,
+    fontSize: 11,
+    fontWeight: '900',
   },
   cardFace__footerTrack: {
     height: 7,

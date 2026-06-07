@@ -164,10 +164,6 @@ export function LearningScreen() {
     }).start();
   };
 
-  const handleCardPrimaryAction = () => {
-    setIsAnswerSheetOpen(true);
-  };
-
   const {
     closeAnswerSheet,
     manualAnswer,
@@ -299,8 +295,8 @@ export function LearningScreen() {
             isCompact={isDenseViewport}
             isCardFlipped={isCardFlipped}
             nextCard={nextCard}
+            onOpenManualAnswer={() => setIsAnswerSheetOpen(true)}
             onOpenDetails={() => setIsDetailsOpen(true)}
-            onPressFront={handleCardPrimaryAction}
             onToggleFace={() => setCardFace(!isCardFlippedRef.current)}
             panHandlers={panResponder.panHandlers}
             sessionIndex={sessionIndex}

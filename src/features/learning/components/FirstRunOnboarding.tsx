@@ -1,5 +1,13 @@
 import { useEffect, useRef } from 'react';
-import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  Animated,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 
 import { CheckIcon, KeyboardIcon, ReviewIcon } from '../../../shared/components/icons';
 import { palette } from '../../../shared/theme';
@@ -11,6 +19,8 @@ type FirstRunOnboardingProps = {
 
 export function FirstRunOnboarding({ onComplete, visible }: FirstRunOnboardingProps) {
   const motion = useRef(new Animated.Value(0)).current;
+  const { height } = useWindowDimensions();
+  const isShortViewport = height < 740;
 
   useEffect(() => {
     if (!visible) {
@@ -76,64 +86,90 @@ export function FirstRunOnboarding({ onComplete, visible }: FirstRunOnboardingPr
 
   return (
     <View style={styles.onboarding}>
-      <View style={styles.onboarding__panel}>
-        <Text style={styles.onboarding__eyebrow}>Быстрый старт</Text>
-        <Text style={styles.onboarding__title}>Карточки отвечают на жесты</Text>
-        <Text style={styles.onboarding__body}>
-          Тап открывает ручную проверку. Свайп вверх засчитывает знание, свайп вниз
-          отправляет команду на повтор.
-        </Text>
-
-        <View style={styles.demo}>
-          <Animated.View
-            style={[styles.demo__badge, styles.demo__badgeTop, { opacity: upOpacity }]}
-          >
-            <CheckIcon color={palette.accentStrong} size={16} />
-            <Text style={styles.demo__badgeText}>Знаю</Text>
-          </Animated.View>
-
-          <Animated.View
+      <ScrollView
+        contentContainerStyle={[
+          styles.onboarding__scrollContent,
+          isShortViewport && styles.onboarding__scrollContentShort,
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
+        <View
+          style={[
+            styles.onboarding__panel,
+            isShortViewport && styles.onboarding__panelShort,
+          ]}
+        >
+          <Text style={styles.onboarding__eyebrow}>Быстрый старт</Text>
+          <Text
             style={[
-              styles.demo__card,
-              {
-                transform: [{ translateY }, { rotate }],
-              },
+              styles.onboarding__title,
+              isShortViewport && styles.onboarding__titleShort,
             ]}
           >
-            <View style={styles.demo__metaRow}>
-              <Text style={styles.demo__pill}>Поиск</Text>
-              <Text style={styles.demo__pill}>1/3</Text>
-            </View>
-            <Text style={styles.demo__label}>Сценарий</Text>
-            <Text style={styles.demo__question}>
-              Как найти строки с текстом error в файле app.log?
-            </Text>
-          </Animated.View>
-
-          <Animated.View
-            style={[
-              styles.demo__badge,
-              styles.demo__badgeBottom,
-              { opacity: downOpacity },
-            ]}
-          >
-            <ReviewIcon color="#f4a261" size={16} />
-            <Text style={styles.demo__badgeText}>Повторить</Text>
-          </Animated.View>
-        </View>
-
-        <View style={styles.onboarding__tip}>
-          <KeyboardIcon color={palette.accentStrong} size={18} />
-          <Text style={styles.onboarding__tipText}>
-            Ручной ответ помогает закрепить синтаксис, а свайпы остаются быстрым способом
-            оценить карточку.
+            Карточки отвечают на жесты
           </Text>
-        </View>
+          <Text style={styles.onboarding__body}>
+            Тап по карточке открывает ответ. Кнопка “Ответ руками” проверяет команду, а
+            свайпы быстро оценивают карточку.
+          </Text>
 
-        <Pressable onPress={onComplete} style={styles.onboarding__button}>
-          <Text style={styles.onboarding__buttonText}>Начать тренировку</Text>
-        </Pressable>
-      </View>
+          <View style={[styles.demo, isShortViewport && styles.demoShort]}>
+            <Animated.View
+              style={[styles.demo__badge, styles.demo__badgeTop, { opacity: upOpacity }]}
+            >
+              <CheckIcon color={palette.accentStrong} size={16} />
+              <Text style={styles.demo__badgeText}>Знаю</Text>
+            </Animated.View>
+
+            <Animated.View
+              style={[
+                styles.demo__card,
+                isShortViewport && styles.demo__cardShort,
+                {
+                  transform: [{ translateY }, { rotate }],
+                },
+              ]}
+            >
+              <View style={styles.demo__metaRow}>
+                <Text style={styles.demo__pill}>Поиск</Text>
+                <Text style={styles.demo__pill}>1/3</Text>
+              </View>
+              <Text style={styles.demo__label}>Сценарий</Text>
+              <Text
+                style={[
+                  styles.demo__question,
+                  isShortViewport && styles.demo__questionShort,
+                ]}
+              >
+                Как найти строки с текстом error в файле app.log?
+              </Text>
+            </Animated.View>
+
+            <Animated.View
+              style={[
+                styles.demo__badge,
+                styles.demo__badgeBottom,
+                { opacity: downOpacity },
+              ]}
+            >
+              <ReviewIcon color="#f4a261" size={16} />
+              <Text style={styles.demo__badgeText}>Повторить</Text>
+            </Animated.View>
+          </View>
+
+          <View style={styles.onboarding__tip}>
+            <KeyboardIcon color={palette.accentStrong} size={18} />
+            <Text style={styles.onboarding__tipText}>
+              Подробности живут на обратной стороне карточки, ручной ответ закрепляет
+              синтаксис.
+            </Text>
+          </View>
+
+          <Pressable onPress={onComplete} style={styles.onboarding__button}>
+            <Text style={styles.onboarding__buttonText}>Начать тренировку</Text>
+          </Pressable>
+        </View>
+      </ScrollView>
     </View>
   );
 }
@@ -143,10 +179,19 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     zIndex: 100,
     elevation: 100,
+    backgroundColor: 'rgba(1, 2, 3, 0.9)',
+  },
+  onboarding__scrollContent: {
+    flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 18,
-    backgroundColor: 'rgba(1, 2, 3, 0.9)',
+    paddingBottom: 28,
+  },
+  onboarding__scrollContentShort: {
+    justifyContent: 'flex-start',
+    paddingTop: 14,
+    paddingBottom: 42,
   },
   onboarding__panel: {
     width: '100%',
@@ -157,6 +202,11 @@ const styles = StyleSheet.create({
     backgroundColor: palette.panel,
     padding: 22,
     gap: 14,
+  },
+  onboarding__panelShort: {
+    borderRadius: 28,
+    padding: 18,
+    gap: 11,
   },
   onboarding__eyebrow: {
     color: palette.accentStrong,
@@ -171,6 +221,10 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     lineHeight: 33,
   },
+  onboarding__titleShort: {
+    fontSize: 24,
+    lineHeight: 29,
+  },
   onboarding__body: {
     color: palette.textSecondary,
     fontSize: 15,
@@ -181,6 +235,9 @@ const styles = StyleSheet.create({
     position: 'relative',
     justifyContent: 'center',
   },
+  demoShort: {
+    height: 224,
+  },
   demo__card: {
     minHeight: 220,
     borderRadius: 28,
@@ -190,6 +247,11 @@ const styles = StyleSheet.create({
     padding: 18,
     justifyContent: 'center',
     gap: 12,
+  },
+  demo__cardShort: {
+    minHeight: 172,
+    borderRadius: 24,
+    padding: 16,
   },
   demo__metaRow: {
     position: 'absolute',
@@ -225,6 +287,10 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '900',
     lineHeight: 30,
+  },
+  demo__questionShort: {
+    fontSize: 20,
+    lineHeight: 25,
   },
   demo__badge: {
     position: 'absolute',
