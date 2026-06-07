@@ -1,0 +1,18 @@
+{
+  "name": "LinuxSwipe",
+  "short_name": "LinuxSwipe",
+  "description": "Темный mobile-first тренажер Linux-команд.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#010203",
+  "theme_color": "#010203",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48 64x64 128x128 256x256",
+      "type": "image/x-icon"
+    }
+  ]
+}

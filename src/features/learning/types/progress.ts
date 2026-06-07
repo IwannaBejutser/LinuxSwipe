@@ -44,4 +44,14 @@ export type LearningStats = {
   manualAttempts: number;
   manualCorrect: number;
   manualAccuracy: number;
+  topics: TopicProgress[];
+};
+
+export type TopicProgress = {
+  category: string;
+  completed: number;
+  known: number;
+  percent: number;
+  review: number;
+  total: number;
 };

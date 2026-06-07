@@ -22,6 +22,7 @@ type LearningCardProps = {
   isCardFlipped: boolean;
   nextCard: Card | null;
   onOpenDetails: () => void;
+  onPressFront?: () => void;
   onToggleFace: () => void;
   panHandlers: GestureResponderHandlers;
   sessionIndex: number;
@@ -40,6 +41,7 @@ export function LearningCard({
   isCardFlipped,
   nextCard,
   onOpenDetails,
+  onPressFront,
   onToggleFace,
   panHandlers,
   sessionIndex,
@@ -194,7 +196,10 @@ export function LearningCard({
             },
           ]}
         >
-          <Pressable onPress={onToggleFace} style={styles.cardFace__pressable}>
+          <Pressable
+            onPress={onPressFront ?? onToggleFace}
+            style={styles.cardFace__pressable}
+          >
             <View style={styles.cardFace__metaRail}>
               <MetaPill
                 isCompact={isNarrow}

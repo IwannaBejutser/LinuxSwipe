@@ -4,6 +4,8 @@ import { FilterIcon } from '../../../shared/components/icons/AppIcons';
 import { palette } from '../../../shared/theme/palette';
 import { getCategoryLabel } from '../lib/category';
 import {
+  CollectionFilter,
+  collectionOptions,
   deckModeOptions,
   DeckMode,
   difficultyOptions,
@@ -13,26 +15,36 @@ import { BottomSheetPanel } from './BottomSheetPanel';
 
 type FilterSheetProps = {
   categories: string[];
+  dailyGoal: number;
   deckMode: DeckMode;
   onClearFilters: () => void;
   onClose: () => void;
+  onResetOnboarding: () => void;
+  onSelectCollection: (value: CollectionFilter) => void;
+  onSelectDailyGoal: (value: number) => void;
   onSelectCategory: (value: string) => void;
   onSelectDeckMode: (value: DeckMode) => void;
   onSelectDifficulty: (value: DifficultyFilter) => void;
   selectedCategory: string;
+  selectedCollection: CollectionFilter;
   selectedDifficulty: DifficultyFilter;
   visible: boolean;
 };
 
 export function FilterSheet({
   categories,
+  dailyGoal,
   deckMode,
   onClearFilters,
   onClose,
+  onResetOnboarding,
+  onSelectCollection,
+  onSelectDailyGoal,
   onSelectCategory,
   onSelectDeckMode,
   onSelectDifficulty,
   selectedCategory,
+  selectedCollection,
   selectedDifficulty,
   visible,
 }: FilterSheetProps) {
@@ -79,6 +91,33 @@ export function FilterSheet({
           selectedValue={selectedDifficulty}
         />
       </View>
+
+      <View style={styles.sheet__section}>
+        <Text style={styles.sheet__sectionTitle}>Подборка</Text>
+        <FilterRail
+          onSelect={(value) => onSelectCollection(value as CollectionFilter)}
+          optionKeys={collectionOptions.map((option) => option.key)}
+          options={collectionOptions.map((option) => option.label)}
+          selectedValue={selectedCollection}
+        />
+      </View>
+
+      <View style={styles.sheet__section}>
+        <Text style={styles.sheet__sectionTitle}>Дневная цель</Text>
+        <FilterRail
+          onSelect={(value) => onSelectDailyGoal(Number(value))}
+          optionKeys={['5', '10', '15']}
+          options={['5 карточек', '10 карточек', '15 карточек']}
+          selectedValue={String(dailyGoal)}
+        />
+      </View>
+
+      <Pressable onPress={onResetOnboarding} style={styles.sheet__resetLearning}>
+        <Text style={styles.sheet__resetLearningTitle}>Показать обучение снова</Text>
+        <Text style={styles.sheet__resetLearningBody}>
+          Откроет короткую демо-карточку со свайпами и ручным режимом.
+        </Text>
+      </Pressable>
 
       <View style={styles.sheet__actions}>
         <Pressable onPress={onClearFilters} style={styles.sheet__ghostButton}>
@@ -169,6 +208,24 @@ const styles = StyleSheet.create({
     color: palette.textPrimary,
     fontSize: 12,
     fontWeight: '800',
+  },
+  sheet__resetLearning: {
+    gap: 5,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: palette.hairline,
+    backgroundColor: 'rgba(130, 245, 208, 0.05)',
+    padding: 14,
+  },
+  sheet__resetLearningTitle: {
+    color: palette.textPrimary,
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  sheet__resetLearningBody: {
+    color: palette.textSecondary,
+    fontSize: 12,
+    lineHeight: 18,
   },
   filterRail: {
     gap: 8,

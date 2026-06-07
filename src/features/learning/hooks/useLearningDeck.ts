@@ -3,6 +3,8 @@ import { useMemo, useState } from 'react';
 import {
   ALL_CATEGORIES_LABEL,
   buildLearningDeck,
+  CollectionFilter,
+  collectionOptions,
   DeckMode,
   DifficultyFilter,
   difficultyOptions,
@@ -18,6 +20,7 @@ type UseLearningDeckParams = {
 
 export function useLearningDeck({ cards, progress, reviewMeta }: UseLearningDeckParams) {
   const [selectedCategory, setSelectedCategory] = useState(ALL_CATEGORIES_LABEL);
+  const [selectedCollection, setSelectedCollection] = useState<CollectionFilter>('all');
   const [selectedDifficulty, setSelectedDifficulty] = useState<DifficultyFilter>('all');
   const [deckMode, setDeckMode] = useState<DeckMode>('all');
 
@@ -34,9 +37,18 @@ export function useLearningDeck({ cards, progress, reviewMeta }: UseLearningDeck
         progress,
         reviewMeta,
         selectedCategory,
+        selectedCollection,
         selectedDifficulty,
       }),
-    [cards, deckMode, progress, reviewMeta, selectedCategory, selectedDifficulty],
+    [
+      cards,
+      deckMode,
+      progress,
+      reviewMeta,
+      selectedCategory,
+      selectedCollection,
+      selectedDifficulty,
+    ],
   );
 
   const completedInFeed =
@@ -46,12 +58,14 @@ export function useLearningDeck({ cards, progress, reviewMeta }: UseLearningDeck
   const progressRatio =
     filteredCards.length === 0 ? 0 : completedInFeed / Math.max(filteredCards.length, 1);
   const activeFiltersCount =
+    (selectedCollection === 'all' ? 0 : 1) +
     (selectedCategory === ALL_CATEGORIES_LABEL ? 0 : 1) +
     (selectedDifficulty === 'all' ? 0 : 1);
   const sessionIndex = Math.min(completedInFeed + 1, Math.max(filteredCards.length, 1));
   const deckLabel = deckMode === 'review' ? 'Очередь повторения' : 'Основная колода';
 
   const clearFilters = () => {
+    setSelectedCollection('all');
     setSelectedCategory(ALL_CATEGORIES_LABEL);
     setSelectedDifficulty('all');
     setDeckMode('all');
@@ -61,6 +75,7 @@ export function useLearningDeck({ cards, progress, reviewMeta }: UseLearningDeck
     activeFiltersCount,
     categories,
     clearFilters,
+    collectionOptions,
     completedInFeed,
     currentCard: remainingCards[0] ?? null,
     deckLabel,
@@ -69,10 +84,12 @@ export function useLearningDeck({ cards, progress, reviewMeta }: UseLearningDeck
     progressRatio,
     remainingCards,
     selectedCategory,
+    selectedCollection,
     selectedDifficulty,
     sessionIndex,
     setDeckMode,
     setSelectedCategory,
+    setSelectedCollection,
     setSelectedDifficulty,
     difficultyOptions,
     nextCard: remainingCards[1] ?? null,

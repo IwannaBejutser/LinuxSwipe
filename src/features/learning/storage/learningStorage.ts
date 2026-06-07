@@ -42,3 +42,11 @@ export async function saveOnboardingSeen(): Promise<void> {
     // Onboarding is helpful, not critical. Never block learning on storage errors.
   }
 }
+
+export async function resetOnboardingSeen(): Promise<void> {
+  try {
+    await AsyncStorage.removeItem(ONBOARDING_KEY);
+  } catch {
+    // Ignore storage errors; the in-memory UI can still show onboarding immediately.
+  }
+}

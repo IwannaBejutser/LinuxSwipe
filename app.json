@@ -15,7 +15,14 @@
       "package": "com.linuxswipe.app"
     },
     "web": {
-      "bundler": "metro"
+      "backgroundColor": "#010203",
+      "bundler": "metro",
+      "description": "Темный mobile-first тренажер Linux-команд.",
+      "display": "standalone",
+      "favicon": "./public/favicon.ico",
+      "name": "LinuxSwipe",
+      "shortName": "LinuxSwipe",
+      "themeColor": "#010203"
     },
     "extra": {
       "eas": {

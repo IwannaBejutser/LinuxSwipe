@@ -10,6 +10,32 @@ export const deckModeOptions = [
 
 export type DeckMode = (typeof deckModeOptions)[number]['key'];
 
+export const collectionOptions = [
+  { key: 'all', label: 'Вся база', categories: null },
+  {
+    key: 'devops',
+    label: 'DevOps',
+    categories: ['Services', 'System Monitoring', 'Processes', 'Automation'],
+  },
+  {
+    key: 'files',
+    label: 'Файлы и права',
+    categories: ['File Management', 'Permissions', 'Archives'],
+  },
+  {
+    key: 'networking',
+    label: 'Сеть',
+    categories: ['Networking', 'Services'],
+  },
+  {
+    key: 'shell',
+    label: 'Shell-практика',
+    categories: ['Search', 'Text Processing', 'Shell'],
+  },
+] as const;
+
+export type CollectionFilter = (typeof collectionOptions)[number]['key'];
+
 export const difficultyOptions = [
   { key: 'all', label: 'Все уровни' },
   { key: 'easy', label: 'Легко' },
@@ -24,6 +50,7 @@ type BuildLearningDeckParams = {
   deckMode: DeckMode;
   progress: Record<string, CardOutcome>;
   reviewMeta: Record<string, ReviewMeta>;
+  selectedCollection: CollectionFilter;
   selectedCategory: string;
   selectedDifficulty: DifficultyFilter;
 };
@@ -57,17 +84,25 @@ export function filterCards({
   cards,
   deckMode,
   progress,
+  selectedCollection,
   selectedCategory,
   selectedDifficulty,
 }: Omit<BuildLearningDeckParams, 'reviewMeta'>) {
+  const collection = collectionOptions.find(
+    (option) => option.key === selectedCollection,
+  );
+
   return cards.filter((card) => {
+    const collectionCategories = collection?.categories as readonly string[] | null;
+    const collectionMatches =
+      !collectionCategories || collectionCategories.includes(card.category);
     const categoryMatches =
       selectedCategory === ALL_CATEGORIES_LABEL || card.category === selectedCategory;
     const difficultyMatches =
       selectedDifficulty === 'all' || card.difficulty === selectedDifficulty;
     const deckModeMatches = deckMode === 'all' ? true : progress[card.id] === 'review';
 
-    return categoryMatches && difficultyMatches && deckModeMatches;
+    return collectionMatches && categoryMatches && difficultyMatches && deckModeMatches;
   });
 }
 

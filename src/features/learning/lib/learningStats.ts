@@ -13,6 +13,52 @@ export const buildStats = (state: LearningState): LearningStats => {
     state.dailyProgress.date === getLocalDateStamp() ? state.dailyProgress.completed : 0;
   const manualAttempts = state.manualStats.attempts;
   const manualCorrect = state.manualStats.correct;
+  const topics = Object.values(
+    cards.reduce<
+      Record<
+        string,
+        {
+          category: string;
+          completed: number;
+          known: number;
+          review: number;
+          total: number;
+        }
+      >
+    >((accumulator, card) => {
+      const topic = accumulator[card.category] ?? {
+        category: card.category,
+        completed: 0,
+        known: 0,
+        review: 0,
+        total: 0,
+      };
+      const outcome = state.progress[card.id];
+
+      topic.total += 1;
+
+      if (outcome) {
+        topic.completed += 1;
+      }
+
+      if (outcome === 'known') {
+        topic.known += 1;
+      }
+
+      if (outcome === 'review') {
+        topic.review += 1;
+      }
+
+      accumulator[card.category] = topic;
+
+      return accumulator;
+    }, {}),
+  )
+    .map((topic) => ({
+      ...topic,
+      percent: topic.total === 0 ? 0 : topic.known / topic.total,
+    }))
+    .sort((left, right) => right.percent - left.percent || right.known - left.known);
 
   return {
     total,
@@ -33,5 +79,6 @@ export const buildStats = (state: LearningState): LearningStats => {
     manualAttempts,
     manualCorrect,
     manualAccuracy: manualAttempts === 0 ? 0 : manualCorrect / manualAttempts,
+    topics,
   };
 };

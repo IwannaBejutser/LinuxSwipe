@@ -7,6 +7,7 @@ import {
 } from '@react-navigation/bottom-tabs';
 import { StatusBar } from 'expo-status-bar';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
   LearningProvider,
@@ -37,8 +38,13 @@ const navigationTheme = {
 };
 
 function AppTabBar({ descriptors, navigation, state }: BottomTabBarProps) {
+  const insets = useSafeAreaInsets();
+
   return (
-    <View pointerEvents="box-none" style={tabBarStyles.wrap}>
+    <View
+      pointerEvents="box-none"
+      style={[tabBarStyles.wrap, { bottom: Math.max(insets.bottom, 14) }]}
+    >
       <View style={tabBarStyles.bar}>
         {state.routes.map((route, index) => {
           const descriptor = descriptors[route.key];
@@ -150,7 +156,6 @@ const tabBarStyles = StyleSheet.create({
     position: 'absolute',
     left: 16,
     right: 16,
-    bottom: 14,
   },
   bar: {
     flexDirection: 'row',

@@ -3,7 +3,15 @@ import { Card } from '../types/card';
 export type ManualAnswerResult = {
   body: string;
   correct: boolean;
-  kind: 'empty' | 'exact' | 'extra-sudo' | 'wrong-flag' | 'close' | 'miss';
+  kind:
+    | 'empty'
+    | 'exact'
+    | 'extra-sudo'
+    | 'wrong-flag'
+    | 'missing-argument'
+    | 'similar-command'
+    | 'close'
+    | 'miss';
   title: string;
 };
 
@@ -127,7 +135,37 @@ export function evaluateManualAnswer(card: Card, value: string): ManualAnswerRes
 
   const inputTokens = normalizedValue.split(' ');
   const answerTokens = normalizedAnswer.split(' ');
+  const hasSameCommand = hasSameBaseCommand(normalizedValue, normalizedAnswer);
+  const missingTokens = answerTokens.filter((token) => !inputTokens.includes(token));
+
+  if (
+    hasSameCommand &&
+    missingTokens.length > 0 &&
+    inputTokens.length < answerTokens.length
+  ) {
+    return {
+      body: `Команда выбрана правильно, но не хватает аргумента: ${missingTokens.join(' ')}.`,
+      correct: false,
+      kind: 'missing-argument',
+      title: 'Не хватает пути или аргумента',
+    };
+  }
+
   const sharedTokens = inputTokens.filter((token) => answerTokens.includes(token)).length;
+  const hasSimilarCommand =
+    !hasSameCommand &&
+    sharedTokens >= 1 &&
+    inputTokens.some((token) => token.length > 2 && normalizedAnswer.includes(token));
+
+  if (hasSimilarCommand) {
+    return {
+      body: `Вы близко к нужному сценарию, но ожидается команда \`${getCommandName(normalizedAnswer)}\`.`,
+      correct: false,
+      kind: 'similar-command',
+      title: 'Команда похожа, но не та',
+    };
+  }
+
   const isCloseMatch =
     sharedTokens >= Math.max(answerTokens.length - 1, 1) ||
     normalizeCommand(stripLeadingSudo(card.answer)) === normalizedValue;

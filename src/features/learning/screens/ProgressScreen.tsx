@@ -22,6 +22,7 @@ import {
 import { AnimatedBackdrop } from '../../../shared/components/AnimatedBackdrop';
 import { useLearning } from '../context/LearningContext';
 import { palette } from '../../../shared/theme/palette';
+import { getCategoryLabel } from '../lib/category';
 
 export function ProgressScreen() {
   const { cards, isHydrated, progress, restart, stats } = useLearning();
@@ -78,7 +79,7 @@ export function ProgressScreen() {
       <AnimatedBackdrop />
 
       <ScrollView
-        contentContainerStyle={[styles.content, { paddingBottom: tabBarHeight + 28 }]}
+        contentContainerStyle={[styles.content, { paddingBottom: tabBarHeight + 96 }]}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.hero}>
@@ -239,6 +240,26 @@ export function ProgressScreen() {
         </View>
 
         <View style={[styles.panel, frameMaxWidth ? { maxWidth: frameMaxWidth } : null]}>
+          <Text style={styles.panelTitle}>Прогресс по темам</Text>
+          <Text style={styles.panelBody}>
+            Так видно, какие навыки уже собираются в систему, а где лучше пройти короткий
+            повтор.
+          </Text>
+
+          <View style={styles.topicList}>
+            {stats.topics.slice(0, 6).map((topic) => (
+              <TopicRow
+                key={topic.category}
+                completed={topic.known}
+                label={getCategoryLabel(topic.category)}
+                percent={topic.percent}
+                total={topic.total}
+              />
+            ))}
+          </View>
+        </View>
+
+        <View style={[styles.panel, frameMaxWidth ? { maxWidth: frameMaxWidth } : null]}>
           <Text style={styles.panelTitle}>Вехи прогресса</Text>
           <Text style={styles.panelBody}>
             Маленькие вехи делают прогресс видимым: не просто учим команды, а закрываем
@@ -288,6 +309,35 @@ export function ProgressScreen() {
         </Pressable>
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+function TopicRow({
+  completed,
+  label,
+  percent,
+  total,
+}: {
+  completed: number;
+  label: string;
+  percent: number;
+  total: number;
+}) {
+  const percentValue = Math.round(percent * 100);
+
+  return (
+    <View style={styles.topicRow}>
+      <View style={styles.topicRowHeader}>
+        <Text style={styles.topicRowLabel}>{label}</Text>
+        <Text style={styles.topicRowValue}>
+          {completed}/{total}
+        </Text>
+      </View>
+      <View style={styles.topicRowTrack}>
+        <View style={[styles.topicRowFill, { width: `${Math.max(percentValue, 4)}%` }]} />
+      </View>
+      <Text style={styles.topicRowMeta}>Освоено на {percentValue}%</Text>
+    </View>
   );
 }
 
@@ -607,6 +657,43 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   milestoneBody: {
+    color: palette.textMuted,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  topicList: {
+    gap: 12,
+  },
+  topicRow: {
+    gap: 8,
+  },
+  topicRowHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  topicRowLabel: {
+    color: palette.textPrimary,
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  topicRowValue: {
+    color: palette.textSecondary,
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  topicRowTrack: {
+    height: 8,
+    borderRadius: 999,
+    backgroundColor: palette.track,
+    overflow: 'hidden',
+  },
+  topicRowFill: {
+    height: '100%',
+    borderRadius: 999,
+    backgroundColor: palette.accentStrong,
+  },
+  topicRowMeta: {
     color: palette.textMuted,
     fontSize: 12,
     fontWeight: '700',

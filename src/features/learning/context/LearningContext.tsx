@@ -25,6 +25,7 @@ type LearningContextValue = {
   markCardKnown: (cardId: string, source?: MarkSource) => Promise<void>;
   markCardForReview: (cardId: string, source?: MarkSource) => Promise<void>;
   restart: () => Promise<void>;
+  setDailyGoal: (goal: number) => Promise<void>;
 };
 
 const LearningContext = createContext<LearningContextValue | undefined>(undefined);
@@ -83,6 +84,15 @@ export function LearningProvider({ children }: PropsWithChildren) {
     await persistState(buildInitialState());
   };
 
+  const setDailyGoal = async (goal: number) => {
+    const nextGoal = Math.max(1, Math.round(goal));
+
+    await persistState({
+      ...stateRef.current,
+      dailyGoal: nextGoal,
+    });
+  };
+
   const value: LearningContextValue = {
     cards,
     isHydrated,
@@ -94,6 +104,7 @@ export function LearningProvider({ children }: PropsWithChildren) {
     markCardForReview: async (cardId, source = 'swipe') =>
       markOutcome(cardId, 'review', source),
     restart,
+    setDailyGoal,
   };
 
   return <LearningContext.Provider value={value}>{children}</LearningContext.Provider>;

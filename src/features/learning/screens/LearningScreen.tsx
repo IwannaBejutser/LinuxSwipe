@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 
-import { ActionDock } from '../components/ActionDock';
+import { ActionDock, TrainingMode } from '../components/ActionDock';
 import { CardDetailsModal } from '../components/CardDetailsModal';
 import { FirstRunOnboarding } from '../components/FirstRunOnboarding';
 import { FilterSheet } from '../components/FilterSheet';
@@ -27,7 +27,11 @@ import { useLearningDeck } from '../hooks/useLearningDeck';
 import { useManualAnswer } from '../hooks/useManualAnswer';
 import { FeedbackTone, useToast } from '../hooks/useToast';
 import { palette } from '../../../shared/theme/palette';
-import { loadOnboardingSeen, saveOnboardingSeen } from '../storage/learningStorage';
+import {
+  loadOnboardingSeen,
+  resetOnboardingSeen,
+  saveOnboardingSeen,
+} from '../storage/learningStorage';
 
 export function LearningScreen() {
   const {
@@ -38,6 +42,7 @@ export function LearningScreen() {
     progress,
     restart,
     reviewMeta,
+    setDailyGoal,
     stats,
   } = useLearning();
   const tabBarHeight = useBottomTabBarHeight();
@@ -62,10 +67,12 @@ export function LearningScreen() {
     progressRatio,
     remainingCards,
     selectedCategory,
+    selectedCollection,
     selectedDifficulty,
     sessionIndex,
     setDeckMode,
     setSelectedCategory,
+    setSelectedCollection,
     setSelectedDifficulty,
   } = deck;
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
@@ -73,6 +80,7 @@ export function LearningScreen() {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isCardFlipped, setIsCardFlipped] = useState(false);
   const [showFirstRunOnboarding, setShowFirstRunOnboarding] = useState(false);
+  const [trainingMode, setTrainingMode] = useState<TrainingMode>('swipe');
   const flipProgress = useRef(new Animated.Value(0)).current;
   const swipeOffset = useRef(new Animated.Value(0)).current;
   const successGlow = useRef(new Animated.Value(0)).current;
@@ -158,6 +166,15 @@ export function LearningScreen() {
     }).start();
   };
 
+  const handleCardPrimaryAction = () => {
+    if (trainingMode === 'manual') {
+      setIsAnswerSheetOpen(true);
+      return;
+    }
+
+    setCardFace(!isCardFlippedRef.current);
+  };
+
   const {
     closeAnswerSheet,
     manualAnswer,
@@ -177,6 +194,12 @@ export function LearningScreen() {
   const completeFirstRunOnboarding = async () => {
     setShowFirstRunOnboarding(false);
     await saveOnboardingSeen();
+  };
+
+  const replayOnboarding = async () => {
+    await resetOnboardingSeen();
+    setIsFiltersOpen(false);
+    setShowFirstRunOnboarding(true);
   };
 
   if (!isHydrated) {
@@ -284,6 +307,7 @@ export function LearningScreen() {
             isCardFlipped={isCardFlipped}
             nextCard={nextCard}
             onOpenDetails={() => setIsDetailsOpen(true)}
+            onPressFront={handleCardPrimaryAction}
             onToggleFace={() => setCardFace(!isCardFlippedRef.current)}
             panHandlers={panResponder.panHandlers}
             sessionIndex={sessionIndex}
@@ -295,7 +319,14 @@ export function LearningScreen() {
 
           <ActionDock
             isCompact={isDenseViewport}
-            onOpenManualAnswer={() => setIsAnswerSheetOpen(true)}
+            mode={trainingMode}
+            onSelectMode={(mode) => {
+              setTrainingMode(mode);
+
+              if (mode === 'manual') {
+                setIsAnswerSheetOpen(true);
+              }
+            }}
           />
 
           <LearningToast
@@ -308,16 +339,21 @@ export function LearningScreen() {
 
       <FilterSheet
         categories={categories}
+        dailyGoal={stats.dailyGoal}
         deckMode={deckMode}
         onClearFilters={() => {
           clearFilters();
           setIsFiltersOpen(false);
         }}
         onClose={() => setIsFiltersOpen(false)}
+        onResetOnboarding={() => void replayOnboarding()}
+        onSelectCollection={setSelectedCollection}
+        onSelectDailyGoal={(goal) => void setDailyGoal(goal)}
         onSelectCategory={setSelectedCategory}
         onSelectDeckMode={setDeckMode}
         onSelectDifficulty={setSelectedDifficulty}
         selectedCategory={selectedCategory}
+        selectedCollection={selectedCollection}
         selectedDifficulty={selectedDifficulty}
         visible={isFiltersOpen}
       />

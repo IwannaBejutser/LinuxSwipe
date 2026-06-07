@@ -1,62 +1,105 @@
+import { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { KeyboardIcon } from '../../../shared/components/icons/AppIcons';
+import { CardsIcon, KeyboardIcon } from '../../../shared/components/icons/AppIcons';
 import { palette } from '../../../shared/theme/palette';
+
+export type TrainingMode = 'manual' | 'swipe';
 
 type ActionDockProps = {
   isCompact?: boolean;
-  onOpenManualAnswer: () => void;
+  mode: TrainingMode;
+  onSelectMode: (mode: TrainingMode) => void;
 };
 
-export function ActionDock({ isCompact = false, onOpenManualAnswer }: ActionDockProps) {
+export function ActionDock({ isCompact = false, mode, onSelectMode }: ActionDockProps) {
   return (
     <View style={[styles.dock, isCompact && styles.dockCompact]}>
-      <Pressable
-        onPress={onOpenManualAnswer}
-        style={({ pressed }) => [
-          styles.dock__challenge,
-          isCompact && styles.dock__challengeCompact,
-          pressed && styles.dock__buttonPressed,
+      <ModeButton
+        icon={
+          <CardsIcon
+            color={mode === 'swipe' ? palette.background : palette.textMuted}
+            size={18}
+          />
+        }
+        isActive={mode === 'swipe'}
+        isCompact={isCompact}
+        label="Свайпы"
+        meta="+10 опыта"
+        onPress={() => onSelectMode('swipe')}
+      />
+      <ModeButton
+        icon={
+          <KeyboardIcon
+            color={mode === 'manual' ? palette.background : palette.accentStrong}
+            size={18}
+          />
+        }
+        isActive={mode === 'manual'}
+        isCompact={isCompact}
+        label="Ручной ответ"
+        meta="+18 опыта"
+        onPress={() => onSelectMode('manual')}
+      />
+    </View>
+  );
+}
+
+function ModeButton({
+  icon,
+  isActive,
+  isCompact,
+  label,
+  meta,
+  onPress,
+}: {
+  icon: ReactNode;
+  isActive: boolean;
+  isCompact: boolean;
+  label: string;
+  meta: string;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.dock__mode,
+        isCompact && styles.dock__modeCompact,
+        isActive && styles.dock__modeActive,
+        pressed && styles.dock__buttonPressed,
+      ]}
+    >
+      <View
+        style={[
+          styles.dock__modeIconWrap,
+          isCompact && styles.dock__modeIconWrapCompact,
+          isActive && styles.dock__modeIconWrapActive,
         ]}
       >
-        <View style={styles.dock__challengeLead}>
-          <View
-            style={[
-              styles.dock__challengeIconWrap,
-              isCompact && styles.dock__challengeIconWrapCompact,
-            ]}
-          >
-            <KeyboardIcon color={palette.accentStrong} size={18} />
-          </View>
-          <View style={styles.dock__challengeCopy}>
-            <Text
-              style={[
-                styles.dock__challengeEyebrow,
-                isCompact && styles.dock__challengeEyebrowCompact,
-              ]}
-            >
-              Режим тренировки
-            </Text>
-            <Text
-              style={[
-                styles.dock__challengeTitle,
-                isCompact && styles.dock__challengeTitleCompact,
-              ]}
-            >
-              Ввести ответ руками
-            </Text>
-          </View>
-        </View>
+        {icon}
+      </View>
+      <View style={styles.dock__modeCopy}>
         <Text
           style={[
-            styles.dock__challengeMeta,
-            isCompact && styles.dock__challengeMetaCompact,
+            styles.dock__modeTitle,
+            isCompact && styles.dock__modeTitleCompact,
+            isActive && styles.dock__modeTitleActive,
           ]}
         >
-          +18 опыта
+          {label}
         </Text>
-      </Pressable>
-    </View>
+        <Text
+          style={[
+            styles.dock__modeMeta,
+            isCompact && styles.dock__modeMetaCompact,
+            isActive && styles.dock__modeMetaActive,
+          ]}
+        >
+          {meta}
+        </Text>
+      </View>
+    </Pressable>
   );
 }
 
@@ -71,76 +114,74 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: palette.hairline,
     backgroundColor: 'rgba(7, 10, 14, 0.56)',
+    flexDirection: 'row',
+    gap: 8,
   },
   dockCompact: {
     padding: 7,
     borderRadius: 20,
   },
-  dock__challenge: {
-    flexDirection: 'row',
+  dock__mode: {
+    flex: 1,
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderRadius: 18,
+    gap: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 11,
+    borderRadius: 17,
     borderWidth: 1,
     borderColor: 'rgba(158, 184, 214, 0.1)',
     backgroundColor: 'rgba(7, 10, 14, 0.72)',
   },
-  dock__challengeCompact: {
-    paddingHorizontal: 12,
+  dock__modeActive: {
+    borderColor: 'rgba(130, 245, 208, 0.28)',
+    backgroundColor: palette.accentStrong,
+  },
+  dock__modeCompact: {
+    paddingHorizontal: 8,
     paddingVertical: 10,
-    borderRadius: 16,
+    borderRadius: 15,
   },
-  dock__challengeLead: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  dock__challengeIconWrap: {
-    width: 34,
-    height: 34,
+  dock__modeIconWrap: {
+    width: 32,
+    height: 32,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 12,
     backgroundColor: 'rgba(130, 245, 208, 0.08)',
   },
-  dock__challengeIconWrapCompact: {
-    width: 32,
-    height: 32,
+  dock__modeIconWrapActive: {
+    backgroundColor: 'rgba(1, 2, 3, 0.08)',
+  },
+  dock__modeIconWrapCompact: {
+    width: 30,
+    height: 30,
     borderRadius: 11,
   },
-  dock__challengeCopy: {
-    flexShrink: 1,
+  dock__modeCopy: {
+    alignItems: 'center',
+    gap: 2,
   },
-  dock__challengeEyebrow: {
-    color: palette.accentStrong,
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-  },
-  dock__challengeEyebrowCompact: {
-    fontSize: 9,
-  },
-  dock__challengeTitle: {
-    marginTop: 3,
+  dock__modeTitle: {
     color: palette.textPrimary,
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: '800',
   },
-  dock__challengeTitleCompact: {
-    fontSize: 14,
+  dock__modeTitleActive: {
+    color: palette.background,
   },
-  dock__challengeMeta: {
+  dock__modeTitleCompact: {
+    fontSize: 12,
+  },
+  dock__modeMeta: {
     color: palette.textMuted,
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '700',
   },
-  dock__challengeMetaCompact: {
-    fontSize: 10,
+  dock__modeMetaActive: {
+    color: 'rgba(1, 2, 3, 0.72)',
+  },
+  dock__modeMetaCompact: {
+    fontSize: 9,
   },
   dock__buttonPressed: {
     opacity: 0.92,
