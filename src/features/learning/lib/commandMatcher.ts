@@ -3,6 +3,7 @@ import { Card } from '../types/card';
 export type ManualAnswerResult = {
   body: string;
   correct: boolean;
+  kind: 'empty' | 'exact' | 'extra-sudo' | 'wrong-flag' | 'close' | 'miss';
   title: string;
 };
 
@@ -58,23 +59,69 @@ export function buildAcceptedCommands(card: Card) {
   return variants;
 }
 
+function getCommandName(value: string) {
+  return stripLeadingSudo(value).split(' ')[0] ?? '';
+}
+
+function getFlagTokens(value: string) {
+  return stripLeadingSudo(value)
+    .split(' ')
+    .filter((token) => /^-{1,2}\w/.test(token));
+}
+
+function hasSameBaseCommand(left: string, right: string) {
+  return getCommandName(left) === getCommandName(right);
+}
+
 export function evaluateManualAnswer(card: Card, value: string): ManualAnswerResult {
   const normalizedValue = normalizeCommand(value);
   const normalizedAnswer = normalizeCommand(card.answer);
+  const acceptedCommands = buildAcceptedCommands(card);
 
   if (!normalizedValue) {
     return {
       body: 'Введите ответ целиком, как если бы вы печатали его в терминале.',
       correct: false,
+      kind: 'empty',
       title: 'Нужна команда',
     };
   }
 
-  if (buildAcceptedCommands(card).has(normalizedValue)) {
+  if (acceptedCommands.has(normalizedValue)) {
     return {
       body: 'Хорошо. Такой ответ можно честно засчитать в уверенное знание.',
       correct: true,
+      kind: 'exact',
       title: 'Верно',
+    };
+  }
+
+  if (
+    /^sudo\s+/i.test(normalizedValue) &&
+    acceptedCommands.has(stripLeadingSudo(normalizedValue))
+  ) {
+    return {
+      body: 'Команда по сути верная, но здесь `sudo` лишний. В реальной системе это может дать слишком широкие права.',
+      correct: false,
+      kind: 'extra-sudo',
+      title: 'Лишний sudo',
+    };
+  }
+
+  const inputFlags = getFlagTokens(normalizedValue);
+  const answerFlags = getFlagTokens(normalizedAnswer);
+  const hasWrongFlag =
+    hasSameBaseCommand(normalizedValue, normalizedAnswer) &&
+    answerFlags.length > 0 &&
+    inputFlags.length > 0 &&
+    inputFlags.some((flag) => !answerFlags.includes(flag));
+
+  if (hasWrongFlag) {
+    return {
+      body: `Команда выбрана правильно, но флаг отличается. Здесь ожидается ${answerFlags.join(', ')}.`,
+      correct: false,
+      kind: 'wrong-flag',
+      title: 'Команда верная, флаг другой',
     };
   }
 
@@ -89,6 +136,7 @@ export function evaluateManualAnswer(card: Card, value: string): ManualAnswerRes
     return {
       body: 'Основа верная. Проверьте один флаг, кавычки или последний аргумент.',
       correct: false,
+      kind: 'close',
       title: 'Почти получилось',
     };
   }
@@ -96,6 +144,7 @@ export function evaluateManualAnswer(card: Card, value: string): ManualAnswerRes
   return {
     body: 'Попробуйте еще раз, переверните карточку или отправьте ее на повтор.',
     correct: false,
+    kind: 'miss',
     title: 'Пока мимо',
   };
 }

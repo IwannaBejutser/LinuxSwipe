@@ -305,6 +305,13 @@ export function LearningCard({
               />
             </Pressable>
 
+            <SurfaceCard
+              body={currentCard.example}
+              icon={<SparkIcon color={palette.accentStrong} size={16} />}
+              title="Когда пригодится"
+              tone="subtle"
+            />
+
             <View style={styles.cardFaceBack__detailsWrap}>
               <View style={styles.cardFaceBack__detailsHint}>
                 <SparkIcon color={palette.accentStrong} size={16} />
@@ -667,8 +674,8 @@ const styles = StyleSheet.create({
   },
   cardFaceBack__detailsWrap: {
     marginTop: 'auto',
-    gap: 14,
-    paddingTop: 16,
+    gap: 12,
+    paddingTop: 12,
   },
   cardFaceBack__detailsHint: {
     flexDirection: 'row',
@@ -753,15 +760,15 @@ const styles = StyleSheet.create({
   },
   surface: {
     marginTop: 10,
-    borderRadius: 22,
-    padding: 14,
-    gap: 8,
+    borderRadius: 20,
+    padding: 13,
+    gap: 7,
     borderWidth: 1,
     borderColor: 'rgba(96, 128, 168, 0.14)',
     backgroundColor: palette.footerPanel,
   },
   surfaceAccent: {
-    marginTop: 16,
+    marginTop: 15,
     backgroundColor: palette.answerPanel,
   },
   surfaceSubtle: {
@@ -781,9 +788,9 @@ const styles = StyleSheet.create({
   },
   surface__answer: {
     color: palette.textPrimary,
-    fontSize: 20,
+    fontSize: 19,
     fontWeight: '900',
-    lineHeight: 26,
+    lineHeight: 25,
   },
   surface__body: {
     color: palette.textSecondary,

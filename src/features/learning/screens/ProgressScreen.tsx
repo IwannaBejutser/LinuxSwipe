@@ -24,7 +24,7 @@ import { useLearning } from '../context/LearningContext';
 import { palette } from '../../../shared/theme/palette';
 
 export function ProgressScreen() {
-  const { isHydrated, restart, stats } = useLearning();
+  const { cards, isHydrated, progress, restart, stats } = useLearning();
   const tabBarHeight = useBottomTabBarHeight();
   const { width } = useWindowDimensions();
   const frameMaxWidth = width >= 768 ? 720 : undefined;
@@ -43,6 +43,29 @@ export function ProgressScreen() {
   const completionPercent = Math.round(stats.completion * 100);
   const dailyGoalPercent = Math.round(stats.dailyGoalProgress * 100);
   const manualAccuracyPercent = Math.round(stats.manualAccuracy * 100);
+  const nextLevelXp = stats.level * 120;
+  const levelProgress = Math.min((stats.xp % 120) / 120, 1);
+  const packageCards = cards.filter((card) => card.category === 'Package Management');
+  const masteredPackageCards = packageCards.filter(
+    (card) => progress[card.id] === 'known',
+  ).length;
+  const milestones = [
+    {
+      body: `${Math.min(stats.known, 10)}/10 уверенных ответов`,
+      done: stats.known >= 10,
+      title: '10 карточек освоены',
+    },
+    {
+      body: `${Math.min(stats.streak, 3)}/3 дня подряд`,
+      done: stats.streak >= 3,
+      title: 'Серия из 3 дней',
+    },
+    {
+      body: `${masteredPackageCards}/${Math.max(packageCards.length, 1)} карточек`,
+      done: packageCards.length > 0 && masteredPackageCards === packageCards.length,
+      title: 'Пакеты освоены',
+    },
+  ];
   const recommendation =
     stats.review > stats.known
       ? 'Сейчас полезнее пройти короткий круг по карточкам на повторе.'
@@ -83,6 +106,21 @@ export function ProgressScreen() {
               style={[
                 styles.progressFill,
                 { width: `${Math.max(completionPercent, 4)}%` },
+              ]}
+            />
+          </View>
+
+          <View style={styles.levelRow}>
+            <Text style={styles.levelText}>До уровня {stats.level + 1}</Text>
+            <Text style={styles.levelText}>
+              {Math.max(nextLevelXp - stats.xp, 0)} опыта
+            </Text>
+          </View>
+          <View style={styles.levelTrack}>
+            <View
+              style={[
+                styles.levelFill,
+                { width: `${Math.max(levelProgress * 100, 4)}%` },
               ]}
             />
           </View>
@@ -198,6 +236,35 @@ export function ProgressScreen() {
               `${(stats.remaining / Math.max(stats.total, 1)) * 100}%` as `${number}%`
             }
           />
+        </View>
+
+        <View style={[styles.panel, frameMaxWidth ? { maxWidth: frameMaxWidth } : null]}>
+          <Text style={styles.panelTitle}>Вехи прогресса</Text>
+          <Text style={styles.panelBody}>
+            Маленькие вехи делают прогресс видимым: не просто учим команды, а закрываем
+            понятные этапы.
+          </Text>
+
+          <View style={styles.milestoneList}>
+            {milestones.map((milestone) => (
+              <View
+                key={milestone.title}
+                style={[styles.milestone, milestone.done && styles.milestoneDone]}
+              >
+                <View style={styles.milestoneIcon}>
+                  {milestone.done ? (
+                    <CheckIcon color={palette.accentStrong} size={15} />
+                  ) : (
+                    <SparkIcon color={palette.textMuted} size={15} />
+                  )}
+                </View>
+                <View style={styles.milestoneCopy}>
+                  <Text style={styles.milestoneTitle}>{milestone.title}</Text>
+                  <Text style={styles.milestoneBody}>{milestone.body}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
         </View>
 
         <View style={[styles.panel, frameMaxWidth ? { maxWidth: frameMaxWidth } : null]}>
@@ -397,6 +464,27 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     backgroundColor: palette.accentStrong,
   },
+  levelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  levelText: {
+    color: palette.textMuted,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  levelTrack: {
+    height: 7,
+    borderRadius: 999,
+    backgroundColor: 'rgba(130, 245, 208, 0.08)',
+    overflow: 'hidden',
+  },
+  levelFill: {
+    height: '100%',
+    borderRadius: 999,
+    backgroundColor: 'rgba(130, 245, 208, 0.55)',
+  },
   summaryMetaRow: {
     flexDirection: 'row',
     gap: 10,
@@ -483,6 +571,45 @@ const styles = StyleSheet.create({
     color: palette.textSecondary,
     fontSize: 15,
     lineHeight: 23,
+  },
+  milestoneList: {
+    gap: 10,
+  },
+  milestone: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 13,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: palette.hairline,
+    backgroundColor: 'rgba(7, 10, 14, 0.62)',
+  },
+  milestoneDone: {
+    borderColor: 'rgba(130, 245, 208, 0.2)',
+    backgroundColor: 'rgba(11, 29, 24, 0.72)',
+  },
+  milestoneIcon: {
+    width: 34,
+    height: 34,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 13,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+  },
+  milestoneCopy: {
+    flex: 1,
+    gap: 3,
+  },
+  milestoneTitle: {
+    color: palette.textPrimary,
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  milestoneBody: {
+    color: palette.textMuted,
+    fontSize: 12,
+    fontWeight: '700',
   },
   progressPanelRow: {
     flexDirection: 'row',

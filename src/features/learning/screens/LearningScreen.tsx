@@ -12,6 +12,7 @@ import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 
 import { ActionDock } from '../components/ActionDock';
 import { CardDetailsModal } from '../components/CardDetailsModal';
+import { FirstRunOnboarding } from '../components/FirstRunOnboarding';
 import { FilterSheet } from '../components/FilterSheet';
 import { LearningEmptyState } from '../components/LearningEmptyState';
 import { LearningHeader } from '../components/LearningHeader';
@@ -26,6 +27,7 @@ import { useLearningDeck } from '../hooks/useLearningDeck';
 import { useManualAnswer } from '../hooks/useManualAnswer';
 import { FeedbackTone, useToast } from '../hooks/useToast';
 import { palette } from '../../../shared/theme/palette';
+import { loadOnboardingSeen, saveOnboardingSeen } from '../storage/learningStorage';
 
 export function LearningScreen() {
   const {
@@ -70,19 +72,40 @@ export function LearningScreen() {
   const [isAnswerSheetOpen, setIsAnswerSheetOpen] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isCardFlipped, setIsCardFlipped] = useState(false);
+  const [showFirstRunOnboarding, setShowFirstRunOnboarding] = useState(false);
   const [sessionSwipeCount, setSessionSwipeCount] = useState(0);
   const flipProgress = useRef(new Animated.Value(0)).current;
   const swipeOffset = useRef(new Animated.Value(0)).current;
   const successGlow = useRef(new Animated.Value(0)).current;
   const warningGlow = useRef(new Animated.Value(0)).current;
   const isCardFlippedRef = useRef(false);
-  const reviewCount = Object.values(progress).filter(
-    (value) => value === 'review',
-  ).length;
   const learnedSwipeCount = Math.max(stats.known + stats.review, sessionSwipeCount);
-  const hasOpenOverlay = isFiltersOpen || isAnswerSheetOpen || isDetailsOpen;
+  const hasOpenOverlay =
+    isFiltersOpen || isAnswerSheetOpen || isDetailsOpen || showFirstRunOnboarding;
   const shouldShowSwipeCoach = learnedSwipeCount < 2 && !hasOpenOverlay;
   const { showToast, toastOpacity, toastState, toastTranslateY } = useToast();
+
+  useEffect(() => {
+    if (!isHydrated) {
+      return;
+    }
+
+    let isMounted = true;
+
+    const loadOnboarding = async () => {
+      const hasSeenOnboarding = await loadOnboardingSeen();
+
+      if (isMounted) {
+        setShowFirstRunOnboarding(!hasSeenOnboarding);
+      }
+    };
+
+    void loadOnboarding();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isHydrated]);
 
   useEffect(() => {
     isCardFlippedRef.current = isCardFlipped;
@@ -156,6 +179,11 @@ export function LearningScreen() {
     pulseCardFeedback,
     showToast,
   });
+
+  const completeFirstRunOnboarding = async () => {
+    setShowFirstRunOnboarding(false);
+    await saveOnboardingSeen();
+  };
 
   if (!isHydrated) {
     return (
@@ -252,9 +280,6 @@ export function LearningScreen() {
             isCompact={isDenseViewport}
             progressRatio={progressRatio}
             remainingCount={remainingCards.length}
-            reviewCount={reviewCount}
-            streak={stats.streak}
-            xp={stats.xp}
           />
 
           <LearningCard
@@ -319,6 +344,11 @@ export function LearningScreen() {
         card={currentCard}
         onClose={() => setIsDetailsOpen(false)}
         visible={isDetailsOpen}
+      />
+
+      <FirstRunOnboarding
+        onComplete={() => void completeFirstRunOnboarding()}
+        visible={showFirstRunOnboarding}
       />
     </SafeAreaView>
   );
