@@ -1,7 +1,16 @@
 import { supabase } from '../../../shared/api/supabase';
 import { validateCards } from './cardSchema';
 import { cards as localCards } from './learningCards';
+import { loadCardCache, saveCardCache } from '../storage/cardCacheStorage';
 import { Card } from '../types/card';
+
+export type LearningCardSource = 'cache' | 'local' | 'supabase';
+
+export type LearningCardsSnapshot = {
+  cards: Card[];
+  source: LearningCardSource;
+  version?: string;
+};
 
 type SupabaseCardRow = {
   accepted_answers: string[] | null;
@@ -15,6 +24,7 @@ type SupabaseCardRow = {
   is_active: boolean | null;
   question: string;
   sort_order: number | null;
+  updated_at: string | null;
 };
 
 function mapSupabaseCard(row: SupabaseCardRow): Card {
@@ -42,9 +52,34 @@ function sortRemoteRows(left: SupabaseCardRow, right: SupabaseCardRow) {
   return left.id.localeCompare(right.id);
 }
 
-export async function loadLearningCards(): Promise<Card[]> {
+async function loadRemoteCardsVersion(): Promise<string | null> {
   if (!supabase) {
-    return localCards;
+    return null;
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('cards')
+      .select('updated_at')
+      .eq('is_active', true)
+      .order('updated_at', { ascending: false })
+      .limit(1);
+
+    const [latestRow] = (data ?? []) as unknown as Array<{ updated_at?: string }>;
+
+    if (error || !latestRow?.updated_at) {
+      return null;
+    }
+
+    return latestRow.updated_at;
+  } catch {
+    return null;
+  }
+}
+
+async function loadRemoteCards(): Promise<LearningCardsSnapshot | null> {
+  if (!supabase) {
+    return null;
   }
 
   try {
@@ -63,18 +98,89 @@ export async function loadLearningCards(): Promise<Card[]> {
           'difficulty',
           'is_active',
           'sort_order',
+          'updated_at',
         ].join(', '),
       )
-      .eq('is_active', true);
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true });
 
     if (error || !data?.length) {
-      return localCards;
+      return null;
     }
 
     const rows = data as unknown as SupabaseCardRow[];
+    const cards = validateCards(rows.sort(sortRemoteRows).map(mapSupabaseCard));
+    const version = rows.reduce((latestVersion, row) => {
+      if (!row.updated_at) {
+        return latestVersion;
+      }
 
-    return validateCards(rows.sort(sortRemoteRows).map(mapSupabaseCard));
+      if (!latestVersion || row.updated_at > latestVersion) {
+        return row.updated_at;
+      }
+
+      return latestVersion;
+    }, '');
+
+    if (version) {
+      await saveCardCache(version, cards);
+    }
+
+    return {
+      cards,
+      source: 'supabase',
+      version,
+    };
   } catch {
-    return localCards;
+    return null;
   }
+}
+
+export async function loadInitialLearningCards(): Promise<LearningCardsSnapshot> {
+  const cachedCards = await loadCardCache();
+
+  if (cachedCards) {
+    return {
+      cards: cachedCards.cards,
+      source: 'cache',
+      version: cachedCards.version,
+    };
+  }
+
+  return {
+    cards: localCards,
+    source: 'local',
+  };
+}
+
+export async function syncLearningCards(
+  currentVersion?: string,
+): Promise<LearningCardsSnapshot | null> {
+  if (!supabase) {
+    return null;
+  }
+
+  const remoteVersion = await loadRemoteCardsVersion();
+
+  if (remoteVersion && currentVersion === remoteVersion) {
+    return null;
+  }
+
+  const remoteSnapshot = await loadRemoteCards();
+
+  if (remoteSnapshot) {
+    return remoteSnapshot;
+  }
+
+  const cachedCards = await loadCardCache();
+
+  if (cachedCards && cachedCards.version !== currentVersion) {
+    return {
+      cards: cachedCards.cards,
+      source: 'cache',
+      version: cachedCards.version,
+    };
+  }
+
+  return null;
 }

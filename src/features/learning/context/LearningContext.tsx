@@ -7,7 +7,11 @@ import {
   useState,
 } from 'react';
 
-import { loadLearningCards } from '../data/cardRepository';
+import {
+  LearningCardSource,
+  loadInitialLearningCards,
+  syncLearningCards,
+} from '../data/cardRepository';
 import { cards as localCards } from '../data/learningCards';
 import { buildInitialState, sanitizeState } from '../lib/learningState';
 import { buildStats } from '../lib/learningStats';
@@ -19,6 +23,7 @@ import { buildNextState } from './learningReducer';
 
 type LearningContextValue = {
   cards: Card[];
+  cardSource: LearningCardSource;
   isHydrated: boolean;
   progress: Record<string, CardOutcome>;
   reviewMeta: Record<string, ReviewMeta>;
@@ -34,6 +39,8 @@ const LearningContext = createContext<LearningContextValue | undefined>(undefine
 export function LearningProvider({ children }: PropsWithChildren) {
   const [state, setState] = useState<LearningState>(buildInitialState);
   const [cards, setCards] = useState<Card[]>(localCards);
+  const [cardSource, setCardSource] = useState<LearningCardSource>('local');
+  const cardVersionRef = useRef<string | undefined>(undefined);
   const [isHydrated, setIsHydrated] = useState(false);
   const stateRef = useRef<LearningState>(buildInitialState());
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
@@ -48,15 +55,25 @@ export function LearningProvider({ children }: PropsWithChildren) {
     const hydrate = async () => {
       const [storedState, loadedCards] = await Promise.all([
         loadLearningState(),
-        loadLearningCards(),
+        loadInitialLearningCards(),
       ]);
       const nextState = sanitizeState(storedState);
 
       if (isMounted) {
-        setCards(loadedCards);
+        cardVersionRef.current = loadedCards.version;
+        setCards(loadedCards.cards);
+        setCardSource(loadedCards.source);
         stateRef.current = nextState;
         setState(nextState);
         setIsHydrated(true);
+      }
+
+      const syncedCards = await syncLearningCards(loadedCards.version);
+
+      if (isMounted && syncedCards) {
+        cardVersionRef.current = syncedCards.version;
+        setCards(syncedCards.cards);
+        setCardSource(syncedCards.source);
       }
     };
 
@@ -101,6 +118,7 @@ export function LearningProvider({ children }: PropsWithChildren) {
 
   const value: LearningContextValue = {
     cards,
+    cardSource,
     isHydrated,
     progress: state.progress,
     reviewMeta: state.reviewMeta,

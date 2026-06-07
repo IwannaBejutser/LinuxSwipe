@@ -19,6 +19,23 @@ create index if not exists cards_difficulty_idx on public.cards (difficulty);
 create index if not exists cards_is_active_idx on public.cards (is_active);
 create index if not exists cards_sort_order_idx on public.cards (sort_order);
 
+create or replace function public.set_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists set_cards_updated_at on public.cards;
+
+create trigger set_cards_updated_at
+  before update on public.cards
+  for each row
+  execute function public.set_updated_at();
+
 alter table public.cards enable row level security;
 
 drop policy if exists "Active cards are publicly readable" on public.cards;
