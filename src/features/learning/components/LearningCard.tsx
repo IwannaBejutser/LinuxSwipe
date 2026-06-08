@@ -196,6 +196,7 @@ export function LearningCard({
             styles.cardFace,
             {
               opacity: frontFaceOpacity,
+              pointerEvents: isCardFlipped ? 'none' : 'auto',
               zIndex: isCardFlipped ? 0 : 2,
               transform: [{ perspective: 1400 }, { rotateY: frontFaceRotation }],
             },
@@ -297,6 +298,7 @@ export function LearningCard({
             styles.cardFaceBack,
             {
               opacity: backFaceOpacity,
+              pointerEvents: isCardFlipped ? 'auto' : 'none',
               zIndex: isCardFlipped ? 2 : 0,
               transform: [{ perspective: 1400 }, { rotateY: backFaceRotation }],
             },
