@@ -52,6 +52,7 @@ function AppTabBar({ descriptors, navigation, state }: BottomTabBarProps) {
           const descriptor = descriptors[route.key];
           const options = descriptor.options;
           const isFocused = state.index === index;
+          const isPrimaryRoute = route.name === 'Learn';
           const isFirstRoute = index === 0;
           const isLastRoute = index === state.routes.length - 1;
           const color = isFocused ? palette.accentStrong : palette.textMuted;
@@ -90,24 +91,55 @@ function AppTabBar({ descriptors, navigation, state }: BottomTabBarProps) {
               onLongPress={onLongPress}
               onPress={onPress}
               style={[
-                tabBarStyles.item,
-                isFocused && tabBarStyles.itemActive,
-                isFocused && isFirstRoute && tabBarStyles.itemActiveLeft,
-                isFocused && isLastRoute && tabBarStyles.itemActiveRight,
+                isPrimaryRoute ? tabBarStyles.primaryItem : tabBarStyles.item,
+                !isPrimaryRoute && isFocused && tabBarStyles.itemActive,
+                !isPrimaryRoute &&
+                  isFocused &&
+                  isFirstRoute &&
+                  tabBarStyles.itemActiveLeft,
+                !isPrimaryRoute &&
+                  isFocused &&
+                  isLastRoute &&
+                  tabBarStyles.itemActiveRight,
               ]}
               testID={options.tabBarButtonTestID}
             >
-              <View style={tabBarStyles.item__content}>
-                {options.tabBarIcon?.({ color, focused: isFocused, size: 22 })}
-                <Text
-                  style={[
-                    tabBarStyles.item__label,
-                    isFocused && tabBarStyles.item__labelActive,
-                  ]}
-                >
-                  {label}
-                </Text>
-              </View>
+              {isPrimaryRoute ? (
+                <View style={tabBarStyles.primaryItem__content}>
+                  <View
+                    style={[
+                      tabBarStyles.primaryItem__button,
+                      isFocused && tabBarStyles.primaryItem__buttonActive,
+                    ]}
+                  >
+                    {options.tabBarIcon?.({
+                      color: isFocused ? palette.background : palette.accentStrong,
+                      focused: isFocused,
+                      size: 28,
+                    })}
+                  </View>
+                  <Text
+                    style={[
+                      tabBarStyles.primaryItem__label,
+                      isFocused && tabBarStyles.primaryItem__labelActive,
+                    ]}
+                  >
+                    {label}
+                  </Text>
+                </View>
+              ) : (
+                <View style={tabBarStyles.item__content}>
+                  {options.tabBarIcon?.({ color, focused: isFocused, size: 21 })}
+                  <Text
+                    style={[
+                      tabBarStyles.item__label,
+                      isFocused && tabBarStyles.item__labelActive,
+                    ]}
+                  >
+                    {label}
+                  </Text>
+                </View>
+              )}
             </Pressable>
           );
         })}
@@ -122,6 +154,7 @@ export default function App() {
       <NavigationContainer theme={navigationTheme}>
         <StatusBar style="light" />
         <Tab.Navigator
+          initialRouteName="Learn"
           tabBar={(props) => <AppTabBar {...props} />}
           screenOptions={({ route }) => ({
             headerShown: false,
@@ -140,14 +173,14 @@ export default function App() {
           })}
         >
           <Tab.Screen
-            component={LearningScreen}
-            name="Learn"
-            options={{ title: 'Карточки' }}
-          />
-          <Tab.Screen
             component={CommandsScreen}
             name="Commands"
             options={{ title: 'Команды' }}
+          />
+          <Tab.Screen
+            component={LearningScreen}
+            name="Learn"
+            options={{ title: 'Карточки' }}
           />
           <Tab.Screen
             component={ProgressScreen}
@@ -168,23 +201,28 @@ const tabBarStyles = StyleSheet.create({
   },
   bar: {
     flexDirection: 'row',
+    alignItems: 'center',
+    minHeight: 68,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
     borderWidth: 1,
     borderColor: palette.hairline,
-    borderRadius: 24,
+    borderRadius: 30,
     backgroundColor: 'rgba(4, 5, 7, 0.94)',
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.24,
     shadowRadius: 24,
     elevation: 0,
-    overflow: 'hidden',
+    overflow: 'visible',
   },
   item: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 12,
-    paddingHorizontal: 8,
+    paddingHorizontal: 6,
+    borderRadius: 24,
   },
   itemActive: {
     backgroundColor: 'rgba(130, 245, 208, 0.045)',
@@ -211,6 +249,44 @@ const tabBarStyles = StyleSheet.create({
     fontWeight: '700',
   },
   item__labelActive: {
+    color: palette.accentStrong,
+  },
+  primaryItem: {
+    width: 96,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: -26,
+  },
+  primaryItem__content: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+  },
+  primaryItem__button: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 66,
+    height: 66,
+    borderWidth: 1,
+    borderColor: 'rgba(130, 245, 208, 0.38)',
+    borderRadius: 999,
+    backgroundColor: 'rgba(7, 10, 14, 0.98)',
+    shadowColor: '#82f5d0',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.16,
+    shadowRadius: 22,
+    elevation: 0,
+  },
+  primaryItem__buttonActive: {
+    borderColor: palette.accentStrong,
+    backgroundColor: palette.accentStrong,
+  },
+  primaryItem__label: {
+    color: palette.textMuted,
+    fontSize: 11,
+    fontWeight: '900',
+  },
+  primaryItem__labelActive: {
     color: palette.accentStrong,
   },
 });
