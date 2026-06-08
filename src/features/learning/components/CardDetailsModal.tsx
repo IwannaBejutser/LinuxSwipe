@@ -49,6 +49,7 @@ export function CardDetailsModal({ card, onClose, visible }: CardDetailsModalPro
             </View>
 
             <DetailPanel body={card.answer} title="Правильный ответ" tone="accent" />
+            <DetailPanel body={card.explanation} title="Почему так" tone="default" />
             <DetailPanel body={card.example} title="Когда пригодится" tone="default" />
             <DetailPanel
               body={card.hint}

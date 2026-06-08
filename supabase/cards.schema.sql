@@ -3,6 +3,7 @@ create table if not exists public.cards (
   command text not null,
   question text not null,
   hint text not null,
+  explanation text not null default '',
   answer text not null,
   accepted_answers text[] not null default '{}',
   example text not null,
@@ -13,6 +14,9 @@ create table if not exists public.cards (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.cards
+  add column if not exists explanation text not null default '';
 
 create index if not exists cards_category_idx on public.cards (category);
 create index if not exists cards_difficulty_idx on public.cards (difficulty);

@@ -19,6 +19,7 @@ type SupabaseCardRow = {
   command: string;
   difficulty: Card['difficulty'];
   example: string;
+  explanation: string;
   hint: string;
   id: string;
   is_active: boolean | null;
@@ -33,6 +34,7 @@ function mapSupabaseCard(row: SupabaseCardRow): Card {
     command: row.command,
     question: row.question,
     hint: row.hint,
+    explanation: row.explanation,
     answer: row.answer,
     acceptedAnswers: row.accepted_answers ?? undefined,
     example: row.example,
@@ -91,6 +93,7 @@ async function loadRemoteCards(): Promise<LearningCardsSnapshot | null> {
           'command',
           'question',
           'hint',
+          'explanation',
           'answer',
           'accepted_answers',
           'example',
@@ -110,6 +113,11 @@ async function loadRemoteCards(): Promise<LearningCardsSnapshot | null> {
 
     const rows = data as unknown as SupabaseCardRow[];
     const cards = validateCards(rows.sort(sortRemoteRows).map(mapSupabaseCard));
+
+    if (cards.length < localCards.length) {
+      return null;
+    }
+
     const version = rows.reduce((latestVersion, row) => {
       if (!row.updated_at) {
         return latestVersion;

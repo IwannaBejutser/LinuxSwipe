@@ -26,7 +26,7 @@ Linux-команды легко узнавать в документации, н
 
 ## Возможности
 
-- 100 карточек по Linux-командам, сгруппированных по практическим темам.
+- 200 карточек по Linux-командам, сгруппированных по практическим темам.
 - Переворот карточки по тапу для проверки ответа.
 - Full-screen popup `Подробнее` с примером, подсказкой и допустимыми вариантами ответа.
 - Свайпы вверх и вниз для оценки знания: `Знаю` и `На повтор`.
@@ -34,7 +34,7 @@ Linux-команды легко узнавать в документации, н
 - Фильтры по теме, сложности и режиму колоды.
 - Очередь повторения с smart-repeat подмешиванием карточек обратно в поток.
 - опыт, уровень, серия, дневная цель и статистика ручных ответов.
-- Контент карточек в JSON с runtime validation и Supabase-ready seed/schema.
+- Контент карточек в JSON с подробными объяснениями, runtime validation и Supabase-ready seed/schema.
 - Локальное сохранение прогресса через `AsyncStorage`.
 - Production web-deploy через EAS Hosting.
 
@@ -121,7 +121,7 @@ npm run content:seed:supabase
 
 Команда обновит `supabase/cards.seed.sql`. Этот файл можно применить после `cards.schema.sql`, и он сделает upsert по `id`, поэтому повторный импорт не создаст дубли.
 
-Когда появится Supabase-клиент, лучше не переписывать UI под БД напрямую. Достаточно заменить адаптер получения карточек: `cards.json -> Supabase rows -> Card[]`. Тогда текущая валидация, matcher, статистика и deck builder останутся рабочими.
+UI не зависит от Supabase напрямую: данные проходят через адаптер `cards.json / Supabase rows -> Card[]`. Поэтому валидация, matcher, статистика и deck builder остаются рабочими независимо от источника карточек.
 
 ### Подключение Supabase
 
@@ -144,7 +144,7 @@ supabase/cards.schema.sql
 supabase/cards.seed.sql
 ```
 
-`cards.schema.sql` включает RLS и public read-only policy для активных карточек. `cards.seed.sql` делает upsert 100 текущих карточек и сохраняет порядок через `sort_order`.
+`cards.schema.sql` включает RLS и public read-only policy для активных карточек. `cards.seed.sql` делает upsert 200 текущих карточек, включая подробные объяснения, и сохраняет порядок через `sort_order`.
 
 ## Модель карточки
 
@@ -154,6 +154,7 @@ supabase/cards.seed.sql
   command: string;
   question: string;
   hint: string;
+  explanation: string;
   answer: string;
   acceptedAnswers?: string[];
   example: string;
@@ -164,7 +165,7 @@ supabase/cards.seed.sql
 
 ## Темы карточек
 
-В текущей колоде 100 карточек по темам:
+В текущей колоде 200 карточек по темам:
 
 - Архивы
 - Автоматизация

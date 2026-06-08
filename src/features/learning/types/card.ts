@@ -3,6 +3,7 @@ export type Card = {
   command: string;
   question: string;
   hint: string;
+  explanation: string;
   answer: string;
   acceptedAnswers?: string[];
   example: string;

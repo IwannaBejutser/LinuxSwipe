@@ -49,6 +49,7 @@ function validateCard(value: unknown): Card {
     command: readString(value, 'command'),
     question: readString(value, 'question'),
     hint: readString(value, 'hint'),
+    explanation: readString(value, 'explanation'),
     answer: readString(value, 'answer'),
     acceptedAnswers: readAcceptedAnswers(value),
     example: readString(value, 'example'),
