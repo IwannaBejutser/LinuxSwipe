@@ -10,14 +10,16 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
+  CommandsScreen,
   LearningProvider,
   LearningScreen,
   ProgressScreen,
 } from './src/features/learning';
-import { CardsIcon, ChartIcon } from './src/shared/components/icons';
+import { CardsIcon, ChartIcon, KeyboardIcon } from './src/shared/components/icons';
 import { palette } from './src/shared/theme';
 
 export type RootTabParamList = {
+  Commands: undefined;
   Learn: undefined;
   Stats: undefined;
 };
@@ -50,6 +52,8 @@ function AppTabBar({ descriptors, navigation, state }: BottomTabBarProps) {
           const descriptor = descriptors[route.key];
           const options = descriptor.options;
           const isFocused = state.index === index;
+          const isFirstRoute = index === 0;
+          const isLastRoute = index === state.routes.length - 1;
           const color = isFocused ? palette.accentStrong : palette.textMuted;
           const label =
             typeof options.tabBarLabel === 'string'
@@ -88,10 +92,8 @@ function AppTabBar({ descriptors, navigation, state }: BottomTabBarProps) {
               style={[
                 tabBarStyles.item,
                 isFocused && tabBarStyles.itemActive,
-                isFocused &&
-                  (index === 0
-                    ? tabBarStyles.itemActiveLeft
-                    : tabBarStyles.itemActiveRight),
+                isFocused && isFirstRoute && tabBarStyles.itemActiveLeft,
+                isFocused && isLastRoute && tabBarStyles.itemActiveRight,
               ]}
               testID={options.tabBarButtonTestID}
             >
@@ -126,6 +128,8 @@ export default function App() {
             tabBarIcon: ({ color, size }) =>
               route.name === 'Learn' ? (
                 <CardsIcon color={color} size={size} />
+              ) : route.name === 'Commands' ? (
+                <KeyboardIcon color={color} size={size} />
               ) : (
                 <ChartIcon color={color} size={size} />
               ),
@@ -139,6 +143,11 @@ export default function App() {
             component={LearningScreen}
             name="Learn"
             options={{ title: 'Карточки' }}
+          />
+          <Tab.Screen
+            component={CommandsScreen}
+            name="Commands"
+            options={{ title: 'Команды' }}
           />
           <Tab.Screen
             component={ProgressScreen}
@@ -175,7 +184,7 @@ const tabBarStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 12,
-    paddingHorizontal: 14,
+    paddingHorizontal: 8,
   },
   itemActive: {
     backgroundColor: 'rgba(130, 245, 208, 0.045)',
@@ -194,11 +203,11 @@ const tabBarStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: 6,
   },
   item__label: {
     color: palette.textMuted,
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
   },
   item__labelActive: {
