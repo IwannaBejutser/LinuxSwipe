@@ -220,6 +220,8 @@ export function LearningCard({
             </View>
 
             <Pressable
+              accessibilityLabel="Перевернуть карточку"
+              accessibilityRole="button"
               onPress={onToggleFace}
               style={[
                 styles.cardFace__questionBlock,
@@ -262,6 +264,8 @@ export function LearningCard({
                 </Text>
                 {onOpenManualAnswer ? (
                   <Pressable
+                    accessibilityLabel="Открыть ручной ответ"
+                    accessibilityRole="button"
                     onPress={onOpenManualAnswer}
                     style={({ pressed }) => [
                       styles.cardFace__manualButton,
@@ -315,7 +319,11 @@ export function LearningCard({
               />
             </View>
 
-            <Pressable onPress={onToggleFace}>
+            <Pressable
+              accessibilityLabel="Вернуться к вопросу"
+              accessibilityRole="button"
+              onPress={onToggleFace}
+            >
               <SurfaceCard
                 body={currentCard.answer}
                 icon={<CheckIcon color={palette.accentStrong} size={18} />}
@@ -341,12 +349,17 @@ export function LearningCard({
 
               <View style={styles.cardFaceBack__actions}>
                 <Pressable
+                  accessibilityLabel="Вернуться к вопросу"
+                  accessibilityRole="button"
                   onPress={onToggleFace}
                   style={styles.cardFaceBack__ghostButton}
                 >
                   <Text style={styles.cardFaceBack__ghostButtonText}>Назад</Text>
                 </Pressable>
                 <Pressable
+                  accessibilityLabel="Открыть подробности карточки"
+                  accessibilityRole="button"
+                  hitSlop={8}
                   onPress={onOpenDetails}
                   style={styles.cardFaceBack__primaryButton}
                 >
