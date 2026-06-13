@@ -1,8 +1,10 @@
 import {
   createContext,
   PropsWithChildren,
+  useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -84,7 +86,7 @@ export function LearningProvider({ children }: PropsWithChildren) {
     };
   }, []);
 
-  const persistState = async (nextState: LearningState) => {
+  const persistState = useCallback(async (nextState: LearningState) => {
     stateRef.current = nextState;
     setState(nextState);
     saveQueueRef.current = saveQueueRef.current
@@ -92,44 +94,72 @@ export function LearningProvider({ children }: PropsWithChildren) {
       .then(() => saveLearningState(nextState));
 
     await saveQueueRef.current;
-  };
+  }, []);
 
-  const markOutcome = async (
-    cardId: string,
-    outcome: CardOutcome,
-    source: MarkSource = 'swipe',
-  ) => {
-    const nextState = buildNextState(stateRef.current, cardId, outcome, source);
-    await persistState(nextState);
-  };
+  const markOutcome = useCallback(
+    async (cardId: string, outcome: CardOutcome, source: MarkSource = 'swipe') => {
+      const nextState = buildNextState(stateRef.current, cardId, outcome, source);
+      await persistState(nextState);
+    },
+    [persistState],
+  );
 
-  const restart = async () => {
-    await persistState(buildInitialState());
-  };
-
-  const setDailyGoal = async (goal: number) => {
-    const nextGoal = Math.max(1, Math.round(goal));
-
-    await persistState({
-      ...stateRef.current,
-      dailyGoal: nextGoal,
-    });
-  };
-
-  const value: LearningContextValue = {
-    cards,
-    cardSource,
-    isHydrated,
-    progress: state.progress,
-    reviewMeta: state.reviewMeta,
-    stats: buildStats(state),
-    markCardKnown: async (cardId, source = 'swipe') =>
+  const markCardKnown = useCallback(
+    async (cardId: string, source: MarkSource = 'swipe') =>
       markOutcome(cardId, 'known', source),
-    markCardForReview: async (cardId, source = 'swipe') =>
+    [markOutcome],
+  );
+
+  const markCardForReview = useCallback(
+    async (cardId: string, source: MarkSource = 'swipe') =>
       markOutcome(cardId, 'review', source),
-    restart,
-    setDailyGoal,
-  };
+    [markOutcome],
+  );
+
+  const restart = useCallback(async () => {
+    await persistState(buildInitialState());
+  }, [persistState]);
+
+  const setDailyGoal = useCallback(
+    async (goal: number) => {
+      const nextGoal = Math.max(1, Math.round(goal));
+
+      await persistState({
+        ...stateRef.current,
+        dailyGoal: nextGoal,
+      });
+    },
+    [persistState],
+  );
+
+  const stats = useMemo(() => buildStats(state), [state]);
+
+  const value: LearningContextValue = useMemo(
+    () => ({
+      cards,
+      cardSource,
+      isHydrated,
+      progress: state.progress,
+      reviewMeta: state.reviewMeta,
+      stats,
+      markCardKnown,
+      markCardForReview,
+      restart,
+      setDailyGoal,
+    }),
+    [
+      cards,
+      cardSource,
+      isHydrated,
+      markCardForReview,
+      markCardKnown,
+      restart,
+      setDailyGoal,
+      state.progress,
+      state.reviewMeta,
+      stats,
+    ],
+  );
 
   return <LearningContext.Provider value={value}>{children}</LearningContext.Provider>;
 }

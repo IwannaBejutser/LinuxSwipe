@@ -111,6 +111,8 @@ export function sortReviewCards(
   allCards: Card[],
   reviewMeta: Record<string, ReviewMeta>,
 ) {
+  const cardOrder = new Map(allCards.map((card, index) => [card.id, index]));
+
   return [...reviewCards].sort((left, right) => {
     const reviewDiff =
       (reviewMeta[right.id]?.count ?? 0) - (reviewMeta[left.id]?.count ?? 0);
@@ -119,10 +121,7 @@ export function sortReviewCards(
       return reviewDiff;
     }
 
-    return (
-      allCards.findIndex((card) => card.id === left.id) -
-      allCards.findIndex((card) => card.id === right.id)
-    );
+    return (cardOrder.get(left.id) ?? 0) - (cardOrder.get(right.id) ?? 0);
   });
 }
 

@@ -56,6 +56,7 @@ export function useAppUpdateCheck() {
   const [availableVersion, setAvailableVersion] = useState<AppVersionManifest | null>(
     null,
   );
+  const [dismissedVersion, setDismissedVersion] = useState<string | null>(null);
 
   useEffect(() => {
     if (Platform.OS !== 'web') {
@@ -78,7 +79,10 @@ export function useAppUpdateCheck() {
         return;
       }
 
-      if (storedVersion !== remoteVersion.version) {
+      if (
+        storedVersion !== remoteVersion.version &&
+        dismissedVersion !== remoteVersion.version
+      ) {
         setAvailableVersion(remoteVersion);
       }
     }
@@ -95,7 +99,7 @@ export function useAppUpdateCheck() {
       isMounted = false;
       subscription.remove();
     };
-  }, []);
+  }, [dismissedVersion]);
 
   async function applyUpdate() {
     if (availableVersion) {
@@ -106,6 +110,7 @@ export function useAppUpdateCheck() {
   }
 
   function dismissUpdate() {
+    setDismissedVersion(availableVersion?.version ?? null);
     setAvailableVersion(null);
   }
 

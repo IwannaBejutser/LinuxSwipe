@@ -20,10 +20,13 @@ import { getCategoryLabel } from '../lib/category';
 import { Card } from '../types/card';
 
 type CommandReference = {
+  answers: string[];
   cards: Card[];
   categories: string[];
   command: string;
   difficulties: Card['difficulty'][];
+  searchIndex: string;
+  summary: string;
 };
 
 type SortMode = 'alphabet' | 'practice';
@@ -39,10 +42,13 @@ function buildCommandReferences(cards: Card[]) {
 
   cards.forEach((card) => {
     const currentReference = commandMap.get(card.command) ?? {
+      answers: [],
       cards: [],
       categories: [],
       command: card.command,
       difficulties: [],
+      searchIndex: '',
+      summary: '',
     };
 
     currentReference.cards.push(card);
@@ -59,15 +65,25 @@ function buildCommandReferences(cards: Card[]) {
   });
 
   return Array.from(commandMap.values())
-    .map((reference) => ({
-      ...reference,
-      categories: reference.categories.sort((left, right) =>
+    .map((reference) => {
+      const categories = reference.categories.sort((left, right) =>
         getCategoryLabel(left).localeCompare(getCategoryLabel(right)),
-      ),
-      difficulties: reference.difficulties.sort(
+      );
+      const difficulties = reference.difficulties.sort(
         (left, right) => difficultyOrder[left] - difficultyOrder[right],
-      ),
-    }))
+      );
+      const answers = getUniqueAnswers(reference.cards);
+      const summary = getCommandSummary(reference.cards);
+
+      return {
+        ...reference,
+        answers,
+        categories,
+        difficulties,
+        searchIndex: getSearchIndex(reference.command, categories, reference.cards),
+        summary,
+      };
+    })
     .sort((left, right) => left.command.localeCompare(right.command));
 }
 
@@ -81,8 +97,8 @@ function getDifficultyLabel(difficulty: Card['difficulty']) {
   return labels[difficulty];
 }
 
-function getCommandSummary(reference: CommandReference) {
-  const [firstCard] = reference.cards;
+function getCommandSummary(cards: Card[]) {
+  const [firstCard] = cards;
 
   if (!firstCard) {
     return 'Команда пока без описания.';
@@ -91,11 +107,11 @@ function getCommandSummary(reference: CommandReference) {
   return firstCard.explanation.split(' Запоминайте ее как связку:')[0];
 }
 
-function getSearchIndex(reference: CommandReference) {
+function getSearchIndex(command: string, categories: string[], cards: Card[]) {
   return [
-    reference.command,
-    ...reference.categories.map(getCategoryLabel),
-    ...reference.cards.flatMap((card) => [
+    command,
+    ...categories.map(getCategoryLabel),
+    ...cards.flatMap((card) => [
       card.answer,
       card.example,
       card.explanation,
@@ -107,8 +123,8 @@ function getSearchIndex(reference: CommandReference) {
     .toLowerCase();
 }
 
-function getUniqueAnswers(reference: CommandReference) {
-  return Array.from(new Set(reference.cards.map((card) => card.answer)));
+function getUniqueAnswers(cards: Card[]) {
+  return Array.from(new Set(cards.map((card) => card.answer)));
 }
 
 export function CommandsScreen() {
@@ -138,8 +154,7 @@ export function CommandsScreen() {
       const matchesCategory =
         selectedCategory === 'all' || reference.categories.includes(selectedCategory);
       const matchesQuery =
-        normalizedQuery.length === 0 ||
-        getSearchIndex(reference).includes(normalizedQuery);
+        normalizedQuery.length === 0 || reference.searchIndex.includes(normalizedQuery);
 
       return matchesCategory && matchesQuery;
     });
@@ -360,7 +375,7 @@ function CommandReferenceCard({
         </View>
       </View>
 
-      <Text style={styles.commandCard__summary}>{getCommandSummary(reference)}</Text>
+      <Text style={styles.commandCard__summary}>{reference.summary}</Text>
 
       {primaryCard ? (
         <View style={styles.commandCard__example}>
@@ -403,8 +418,6 @@ function CommandDetailsModal({
     return null;
   }
 
-  const answers = getUniqueAnswers(reference);
-
   return (
     <Modal
       animationType="slide"
@@ -436,13 +449,11 @@ function CommandDetailsModal({
                 {reference.categories.map(getCategoryLabel).join(', ')}
               </Text>
             </View>
-            <Text style={styles.detailsHero__summary}>
-              {getCommandSummary(reference)}
-            </Text>
+            <Text style={styles.detailsHero__summary}>{reference.summary}</Text>
           </View>
 
           <DetailsPanel title="Типовые варианты">
-            {answers.slice(0, 8).map((answer) => (
+            {reference.answers.slice(0, 8).map((answer) => (
               <View key={answer} style={styles.answerRow}>
                 <Text style={styles.answerRow__text}>{answer}</Text>
               </View>
