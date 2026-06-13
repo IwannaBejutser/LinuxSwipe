@@ -2,7 +2,9 @@ node_modules/
 .expo/
 dist/
 dist-prod/
+dist-prod-next/
 web-build/
+public/version.json
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

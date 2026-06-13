@@ -48,3 +48,11 @@ export async function saveCardCache(version: string, cards: Card[]): Promise<voi
     // Card cache improves startup/offline UX, but must never block learning.
   }
 }
+
+export async function clearCardCache(): Promise<void> {
+  try {
+    await AsyncStorage.removeItem(CARD_CACHE_KEY);
+  } catch {
+    // App updates should still continue even if the optional card cache is locked.
+  }
+}

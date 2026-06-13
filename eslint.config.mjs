@@ -13,6 +13,7 @@ export default [
       '.tmp-edge-profile/',
       'dist/',
       'dist-prod/',
+      'dist-prod-next/',
       'node_modules/',
       'web-build/',
     ],

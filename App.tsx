@@ -16,6 +16,7 @@ import {
   ProgressScreen,
 } from './src/features/learning';
 import { CardsIcon, ChartIcon, KeyboardIcon } from './src/shared/components/icons';
+import { AppUpdatePrompt } from './src/shared/appUpdate';
 import { palette } from './src/shared/theme';
 
 export type RootTabParamList = {
@@ -189,6 +190,7 @@ export default function App() {
           />
         </Tab.Navigator>
       </NavigationContainer>
+      <AppUpdatePrompt />
     </LearningProvider>
   );
 }
